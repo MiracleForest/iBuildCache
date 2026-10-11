@@ -313,8 +313,6 @@ def dependency_specs(ctx, version: str, commit: str) -> list[str]:
     This is the list the dependency pass builds with current sources and a current
     xmake, so that its addresses are the ones a consumer asks for.
     """
-    from lib import repos
-
     specs = _recipe_specs(ctx, version)
     known = {spec.split()[0].split("[", 1)[0] for spec in specs}
     for item in extra_deps(ctx, version, commit) or []:
@@ -379,13 +377,13 @@ def report_skipped(ctx, known: list[dict]) -> list[str]:
 def repair_recipes(config, source_name: str, snapshot) -> list[str]:
     """Project-specific recipe repair hook.
 
-    Runs for every recipe snapshot before vendoring. LeviLamina-era data
+    Runs for every recipe snapshot before the build sees it. LeviLamina-era data
     packages (`bdslibrary`, old `bedrockdata`) declare four-component
     versions such as `1.21.3.01` which xmake's own semver parser rejects,
     making the whole repository unloadable. The repair belongs here rather than
     in the framework: rewrite those versions to a legal, ordered form
     (`1.21.3.01` -> `1.21.3-r01`), pin the upstream tag in a literal URL
-    alias, and rename the matching dependency strings in our vendored version
+    alias, and rename the matching dependency strings in our snapshot's version
     files.
     """
     return _repair_legacy_versions(snapshot) + _repair_era_sources(snapshot)

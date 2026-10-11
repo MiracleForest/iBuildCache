@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import build  # noqa: E402
+import cache  # noqa: E402
 import discover  # noqa: E402
 import finalize  # noqa: E402
 from lib import (  # noqa: E402
@@ -81,8 +82,8 @@ def test_manifest_round_trip(tmp_path: Path):
     entries = {
         "windows-x64-vc-abc": {"toolset": "14.44", "urls": "https://x/a.7z", "sha256": "ff" * 32}
     }
-    manifest.write_all(tmp_path, "mifcache_fmt", "11.2.0", entries)
-    assert manifest.read(tmp_path, "mifcache_fmt", "11.2.0") == entries
+    manifest.write_all(tmp_path, "fmt", "11.2.0", entries)
+    assert manifest.read(tmp_path, "fmt", "11.2.0") == entries
 
 
 def test_build_id_matches_xmake_contract():
@@ -95,38 +96,55 @@ def test_build_id_matches_xmake_contract():
 # ------------------------------------------------------------------ index/store
 def test_revision_gates_rebuilds(tmp_path: Path):
     index_store.write_entry(
-        tmp_path, "mifcache_fmt", "11.2.0", "server", {"revision": 1, "artifacts": []}
+        tmp_path, "fmt", "11.2.0", "server", {"revision": 1, "artifacts": []}
     )
-    assert index_store.built_entries_at_revision(tmp_path, "mifcache_fmt", "11.2.0", 1) == {"server"}
+    assert index_store.built_entries_at_revision(tmp_path, "fmt", "11.2.0", 1) == {"server"}
     # a fix bumps the config revision -> the entry counts as stale again
-    assert index_store.built_entries_at_revision(tmp_path, "mifcache_fmt", "11.2.0", 2) == set()
+    assert index_store.built_entries_at_revision(tmp_path, "fmt", "11.2.0", 2) == set()
 
 
-def test_legacy_variant_documents_still_read(tmp_path: Path):
+def test_a_document_written_before_entries_were_named_still_reads(tmp_path: Path):
+    """Documents used `variants` before the entry dimension got its name."""
     util.write_json(
-        tmp_path / "mifcache_fmt" / "versions" / "11.2.0.json",
-        {"package": "mifcache_fmt", "version": "11.2.0", "artifacts": [{"key": "k"}]},
+        tmp_path / "fmt" / "versions" / "11.2.0.json",
+        {"package": "fmt", "version": "11.2.0", "variants": {"default": {"artifacts": []}}},
     )
-    meta = index_store.version_meta(tmp_path, "mifcache_fmt", "11.2.0")
+    meta = index_store.version_meta(tmp_path, "fmt", "11.2.0")
     assert "default" in index_store.entries(meta)
+
+
+def test_a_document_without_any_entry_is_empty_not_invented(tmp_path: Path):
+    """Nothing generic may guess what a package's entries were called.
+
+    A record that only carries top-level artifacts predates the entry dimension,
+    and inventing one there would have to name a *project's* concept (LeviLamina's
+    ``target_type``) for every package in the ledger.
+    """
+    util.write_json(
+        tmp_path / "fmt" / "versions" / "11.2.0.json",
+        {"package": "fmt", "version": "11.2.0", "artifacts": [{"key": "k"}]},
+    )
+    meta = index_store.version_meta(tmp_path, "fmt", "11.2.0")
+    assert index_store.entries(meta) == {}
+    assert index_store.all_artifacts(meta) == []
 
 
 def test_entry_keeps_the_profiles_it_was_built_for(tmp_path: Path):
     """`discover` compares the declared profiles against what an entry records."""
     index_store.write_entry(
         tmp_path,
-        "mifcache_levilamina",
+        "levilamina",
         "26.51.6",
         "server",
         {"revision": 1, "alias_profiles": ["msvc", "clang-cl"], "artifacts": []},
     )
     assert index_store.built_entries_with_profiles(
-        tmp_path, "mifcache_levilamina", "26.51.6", 1, ["msvc", "clang-cl"]
+        tmp_path, "levilamina", "26.51.6", 1, ["msvc", "clang-cl"]
     ) == {"server"}
     # a plugin that starts declaring another profile queues the entry again
     assert (
         index_store.built_entries_with_profiles(
-            tmp_path, "mifcache_levilamina", "26.51.6", 1, ["msvc", "clang-cl", "gcc"]
+            tmp_path, "levilamina", "26.51.6", 1, ["msvc", "clang-cl", "gcc"]
         )
         == set()
     )
@@ -140,11 +158,14 @@ def test_shipped_config_is_valid():
     assert config.bot.email.endswith("users.noreply.github.com")
 
 
-def test_config_typo_is_rejected():
+def test_a_config_that_misses_a_repository_is_rejected():
+    import pydantic
     import pytest
 
-    with pytest.raises(Exception):
-        schemas.validate(schemas.Config, {"prefix": "x", "repos": {"package": {}, "cache": {}}})
+    with pytest.raises(pydantic.ValidationError):
+        schemas.validate(
+            schemas.Config, {"repos": {"cache": {"owner": "o", "repo": "r"}}}
+        )
 
 
 # ---------------------------------------------------------------------- aliases
@@ -185,8 +206,7 @@ def test_finalize_publishes_aliases_into_the_manifest(tmp_path: Path):
     index_root = tmp_path / "index"
     package_repo = tmp_path / "xmake-repo"
     artifact = {
-        "package": "mifcache_fmt",
-        "upstream_package": "fmt",
+        "package": "fmt",
         "version": "11.2.0",
         "buildhash": "ee1902dd",
         "key": "windows-x64-vc-ee1902dd",
@@ -204,7 +224,7 @@ def test_finalize_publishes_aliases_into_the_manifest(tmp_path: Path):
         ],
     }
     index_store.write_entry(
-        index_root, "mifcache_fmt", "11.2.0", "server", {"revision": 1, "artifacts": [artifact]}
+        index_root, "fmt", "11.2.0", "server", {"revision": 1, "artifacts": [artifact]}
     )
     config = util.load_config()
     finalize.regenerate_manifests(
@@ -213,7 +233,7 @@ def test_finalize_publishes_aliases_into_the_manifest(tmp_path: Path):
         index_root=index_root,
         package_repo=package_repo,
     )
-    entries = manifest.read(package_repo, "mifcache_fmt", "11.2.0")
+    entries = manifest.read(package_repo, "fmt", "11.2.0")
     assert set(entries) == {"windows-x64-vc-ee1902dd", "windows-x64-vc-df51e1a2"}
     # one archive, two addresses
     assert entries["windows-x64-vc-df51e1a2"] == entries["windows-x64-vc-ee1902dd"]
@@ -393,12 +413,11 @@ def test_manifests_of_removed_packages_are_dropped(tmp_path: Path):
     repo = tmp_path / "repo"
 
     meta = {
-        "package": "mifcache_fmt",
+        "package": "fmt",
         "version": "11.2.0",
-        "prefix": "mifcache_",
         "artifacts": [
             {
-                "package": "mifcache_fmt",
+                "package": "fmt",
                 "version": "11.2.0",
                 "buildhash": "ee1902dd7cff4195a287949f80dbce70",
                 "key": "windows-x64-vc-ee1902dd7cff4195a287949f80dbce70",
@@ -409,28 +428,49 @@ def test_manifests_of_removed_packages_are_dropped(tmp_path: Path):
             }
         ],
     }
-    index_store.write_entry(ctx.index_root, "mifcache_fmt", "11.2.0", "default", meta)
+    index_store.write_entry(ctx.index_root, "fmt", "11.2.0", "default", meta)
     # a package the cache no longer holds, and the recipe that must survive it
-    stale = repo / "packages" / "m" / "mifcache_entt"
+    stale = repo / "packages" / "e" / "entt"
     (stale / "v3.13.1").mkdir(parents=True)
     (stale / "v3.13.1" / "manifest.txt").write_text("{}", encoding="utf-8")
-    (stale / "xmake.lua").write_text('package("mifcache_entt")\n', encoding="utf-8")
+    (stale / "xmake.lua").write_text('package("entt")\n', encoding="utf-8")
     (stale / "versions").mkdir()
     (stale / "versions" / "versions.txt").write_text("v3.13.1 abc\n", encoding="utf-8")
-    # the project is published under its upstream name too, and after a wipe the
-    # index cannot say that name is ours -- the plugin can. That directory holds
-    # manifests only; the recipe lives under the prefixed name.
+    # a package the cache no longer holds: nothing in the repository says that
+    # name is ours, but the directory holds nothing but a manifest, which is what
+    # makes it ours to remove.
     upstream = repo / "packages" / "l" / "levilamina"
     (upstream / "0.8.3").mkdir(parents=True)
     (upstream / "0.8.3" / "manifest.txt").write_text("{}", encoding="utf-8")
 
     finalize.regenerate_manifests(config, ctx, ctx.index_root, repo)
 
-    assert (repo / "packages" / "m" / "mifcache_fmt" / "11.2.0" / "manifest.txt").is_file()
+    assert (repo / "packages" / "f" / "fmt" / "11.2.0" / "manifest.txt").is_file()
     assert (stale / "v3.13.1").exists() is False
     assert (stale / "xmake.lua").is_file() and (stale / "versions" / "versions.txt").is_file()
     assert (upstream / "0.8.3").exists() is False
     assert upstream.exists() is False
+
+
+def test_removing_one_entry_leaves_the_other_in_the_document(tmp_path: Path):
+    """`cache.py remove` rewrites the entry map under the key readers use.
+
+    A generated document that keeps both the current and the legacy key would be
+    read from whichever copy a reader happens to prefer, so the removal
+    normalises it: the entry it dropped is gone, the other one is untouched.
+    """
+    index_root = tmp_path / "index"
+    for entry_id in ("server", "client"):
+        index_store.write_entry(
+            index_root, "levilamina", "26.51.6", entry_id, {"revision": 1, "artifacts": []}
+        )
+    context = plugins.Context({**util.load_config(), "_index_dir": str(index_root)})
+
+    cache._drop_from_index(context, [("levilamina", "26.51.6", "client", [])])
+
+    document = util.read_json(index_root / "levilamina" / "versions" / "26.51.6.json", None)
+    assert set(index_store.entries(document)) == {"server"}
+    assert "variants" not in document
 
 
 def test_a_failed_upload_is_retried(tmp_path: Path, monkeypatch):
@@ -440,8 +480,6 @@ def test_a_failed_upload_is_retried(tmp_path: Path, monkeypatch):
     one of them is still creating it ("HTTP 404" on the upload endpoint). The
     archive is re-attached after re-resolving the release.
     """
-    from lib import gh
-
     class Result:
         returncode = 1
         stdout = ""
@@ -479,13 +517,12 @@ def test_an_artifact_already_published_is_not_packed_again(tmp_path: Path):
     config["revision"] = 7
     ctx = plugins.Context(config)
     record = {
-        "package": "mifcache_fmt",
+        "package": "fmt",
         "version": "11.2.0",
         "revision": 7,
         "artifacts": [
             {
-                "package": "mifcache_fmt",
-                "upstream_package": "fmt",
+                "package": "fmt",
                 "version": "11.2.0",
                 "buildhash": "ee1902dd7cff4195a287949f80dbce70",
                 "key": "windows-x64-vc-ee1902dd7cff4195a287949f80dbce70",
@@ -494,18 +531,18 @@ def test_an_artifact_already_published_is_not_packed_again(tmp_path: Path):
             }
         ],
     }
-    index_store.write_entry(ctx.index_root, "mifcache_fmt", "11.2.0", "default", record)
+    index_store.write_entry(ctx.index_root, "fmt", "11.2.0", "default", record)
 
     found = build.cached_artifact(
-        ctx, "mifcache_fmt", "11.2.0", "ee1902dd7cff4195a287949f80dbce70", 7
+        ctx, "fmt", "11.2.0", "ee1902dd7cff4195a287949f80dbce70", 7
     )
     assert found and found["sha256"] == "ab" * 32
     # a different build, or one from an older revision, is packed instead
-    assert build.cached_artifact(ctx, "mifcache_fmt", "11.2.0", "deadbeef", 7) is None
+    assert build.cached_artifact(ctx, "fmt", "11.2.0", "deadbeef", 7) is None
     assert build.cached_artifact(
-        ctx, "mifcache_fmt", "11.2.0", "ee1902dd7cff4195a287949f80dbce70", 8
+        ctx, "fmt", "11.2.0", "ee1902dd7cff4195a287949f80dbce70", 8
     ) is None
-    assert build.cached_artifact(ctx, "mifcache_fmt", "10.2.1", "ee1902dd", 7) is None
+    assert build.cached_artifact(ctx, "fmt", "10.2.1", "ee1902dd", 7) is None
 
 
 def test_packing_is_reproducible(tmp_path: Path, monkeypatch):
@@ -941,7 +978,7 @@ def test_upstream_pins_are_rewritten_while_the_project_builds(tmp_path: Path):
     """The era's *project* file pins its data package, so both sides must agree.
 
     LeviLamina 0.8.3's own xmake.lua says ``add_requires("bdslibrary 1.20.61.01")``,
-    a four-component version the vendored recipe cannot offer any more (it was
+    a four-component version the repaired recipe cannot offer any more (it was
     renamed). The recipe therefore rewrites the project file while it installs --
     and that era spells the anchor ``on_install(function (package)``, with a space.
     """
@@ -992,7 +1029,6 @@ def test_dependencies_are_recorded_once_without_an_entry(tmp_path: Path):
     def artifact(package: str, buildhash: str, entry: str) -> dict:
         return {
             "package": package,
-            "upstream_package": package,
             "version": "11.2.0" if package == "fmt" else "26.51.6",
             "buildhash": buildhash,
             "key": f"windows-x64-vc-{buildhash}",

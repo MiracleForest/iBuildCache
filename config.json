@@ -14,7 +14,7 @@
     },
     "cache": {
       "owner": "MiracleForest",
-      "repo": "BuildCache"
+      "repo": "iBuildCache"
     },
     "index": {
       "branch": "index"
@@ -83,8 +83,7 @@
     "installRetries": 3,
     "heartbeatSeconds": 30,
     "silentTimeoutSeconds": 1800,
-    "verbose": true,
-    "cacheDir": ".cache/xmake"
+    "verbose": true
   },
   "batch": {
     "defaultSize": 20,

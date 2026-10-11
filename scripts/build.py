@@ -7,7 +7,6 @@ sandbox, then exported, packed and published as precompiled artifacts.
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 from datetime import datetime, timezone
@@ -22,8 +21,6 @@ from lib import (  # noqa: E402
     gitops,
     packer,
     plugins,
-    recipefix,
-    repos,
     sources,
     util,
     xmake_env,
@@ -209,11 +206,11 @@ def main() -> int:
     if skip:
         util.log(f"skip {args.version}: {reason}")
         return 0
-    upstream_package = plugin.call("metadata")["package"]
+    own_package = plugin.call("metadata")["package"]
     # Packages are built and published under their own names: the repository we
-    # publish holds manifests only, so a consumer resolving the upstream package
-    # finds our archive without a copy of the recipe being involved.
-    require = f"{upstream_package} {args.version}"
+    # publish holds manifests only, so a consumer resolving that name finds our
+    # archive without a copy of the recipe being involved.
+    require = f"{own_package} {args.version}"
     util.log("entry: " + entry["id"] + "  configs: " + str(configs))
 
     cutoff_for_recipes = plugin.call("recipe_cutoff", ctx, args.version, commit)
@@ -366,10 +363,9 @@ def publish(config, args, ctx, sandbox, plat, arch, toolchain, vs_toolset, xmake
                 util.log(f"skip configured tool package: {name}")
                 continue
             # Packages keep their own names: the repository we publish holds
-            # manifests only, so a consumer resolving the upstream package finds
-            # our archive (xmake looks the manifest up by the resolved name, in
-            # every repository) without carrying a copy of the recipe.
-            published_name = name
+            # manifests only, so a consumer resolving that name finds our archive
+            # (xmake looks the manifest up by the resolved name, in *every*
+            # repository) without carrying a copy of the recipe.
             for version_dir in sorted(package_dir.iterdir()):
                 if not version_dir.is_dir():
                     continue
@@ -380,7 +376,10 @@ def publish(config, args, ctx, sandbox, plat, arch, toolchain, vs_toolset, xmake
                     artifact = _publish_one(
                         config, ctx, sandbox, dist, owner, repo, max_assets, plugin,
                         name, version, hash_dir, plat, arch,
-                        toolset_for_key(vs_toolset, name),
+                        # The manifest's toolset field is compared against a
+                        # consumer's VCToolsVersion, so it records the toolset the
+                        # build really used.
+                        vs_toolset,
                         repo_order=repo_order or [], commit=commit, toolchain=toolchain,
                         root_package=package_name,
                         target_branch=target_branch, dry_run=dry_run, force=force,
@@ -396,7 +395,6 @@ def publish(config, args, ctx, sandbox, plat, arch, toolchain, vs_toolset, xmake
         "configs": configs,
         "revision": int(config.get("revision", 1)),
         "upstream_commit": commit,
-        "entry": entry["id"],
         "xmake_version": xmake_version,
         "toolchain": toolchain,
         "upstream_toolchain": upstream_toolchain,
@@ -407,11 +405,6 @@ def publish(config, args, ctx, sandbox, plat, arch, toolchain, vs_toolset, xmake
         "built_at": now(),
         "artifacts": artifacts,
     }
-
-
-def toolset_for_key(vs_toolset: str | None, package: str) -> str | None:
-    """The manifest toolset field is compared against a consumer's VCToolsVersion."""
-    return vs_toolset
 
 
 def extra_requires(ctx, repos, extra: list[dict]) -> list[str]:
@@ -636,16 +629,15 @@ def _publish_one(config, ctx, sandbox, dist, owner, repo, max_assets, plugin,
         release = f"{name}_dry_run"
         url = f"file://{archive.as_posix()}"
     else:
-        # Shards and their tags are named after the *upstream* package: the
-        # prefix only exists to keep published package names distinct, it has no
-        # business showing up in release tags or titles.
+        # A shard and its tag are named after the package, because the tag is an
+        # address: the version, the entry and the hash all live in the index and
+        # the release body instead of in a longer name.
         release = gh.assign_release(name, [asset], owner, repo, max_assets, config=config)
         gh.ensure_release(owner, repo, release, target=target_branch, config=config)
         gh.upload_asset(owner, repo, release, archive, config=config)
         url = gh.asset_url(owner, repo, release, asset)
     return {
         "package": name,
-        "upstream_package": name,
         "version": version,
         "buildhash": hash_dir.name,
         "key": key,

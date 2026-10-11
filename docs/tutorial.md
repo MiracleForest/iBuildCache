@@ -40,7 +40,7 @@ packages/<首字母>/<包名>/<版本>/manifest.txt
 ## 4. 快速开始（本机）
 
 ```bash
-# 依赖：Python 3.14+、已登录的 gh CLI；第三方包（semver）首次运行会自动 pip 安装
+# 依赖：Python 3.14+、已登录的 gh CLI；第三方包（semver / pydantic / pytest）首次运行会自动 pip 安装
 python scripts/cache.py trigger --plugin ll --first-only --local   # 编一个版本并发布
 python scripts/cache.py verify               # 校验「索引 ↔ 线上 asset」一致
 cd tests/consumer && xmake f -y -p windows -a x64 -m release      # 消费端验证
@@ -95,7 +95,11 @@ msvc 工具链，而它的预编译选择逻辑要求「存在已 check、带 vc
 | `configs(ctx, version, commit)` | 单条目项目的默认 configs |
 | `xmake_version` / `toolchain` / `native_toolchain` | 用哪个 xmake、用哪个工具链编缓存 |
 | `toolchain_aliases(ctx, version, commit)` | 产物还能被哪些消费端工具链使用：`[{"id": "clang-cl", "toolchain": "clang-cl"}]`，命中同一份压缩包、只补 manifest 条目；只声明这个版本真的支持的那些（见下） |
-| `recipe_cutoff` / `git_cutoff` | 配方快照与「未锁版本的 git clone 回退到的日期」 |
+| `toolchain_plan(ctx, version, commit)` | 这个年代要哪台 CI 镜像（`image`）与 `vs_toolset`；`discover` 把它写进矩阵，`should_skip` 用它判断当前镜像/本机能不能编 |
+| `dependency_specs(ctx, version, commit)` | 消费端解析这个版本时拿到的那串依赖；年代 xmake 读不了今天的配方时，用它 + 当前 xmake 补编一遍依赖（见 §8） |
+| `register_release_columns(table, ctx)` | 往 release body / `cache.py list` 的表格里注册项目自己的列；两处共用同一张表，空列不渲染 |
+| `repair_recipes(config, source, snapshot)` | 项目特有的配方修复（历史版本号、上游改名等），在通用修复之后运行 |
+| `recipe_cutoff` / `git_cutoff` | 配方快照与「未锁版本的 git clone 回退到的日期」；偏移量分别是 `recipes.cutoffOffsetDays` 与 `gitShim.offsetDays`（默认都是 3 天） |
 | `extra_deps(ctx, version, commit)` | 只在上游自身 `xmake.lua` 里出现的依赖（`extra_packages` 名单内的）：既注入消费端配方，也**在构建时顶层 require**，否则只声明不编译，消费端每次都得自己编 |
 | `asset_name(...)` | 自定义 asset 文件名（默认 `<原库名>-<buildhash>.<ext>`） |
 | `should_skip` / `report_skipped` | 过滤与报表 |
@@ -204,8 +208,9 @@ cache.py trigger --plugin ll --entry client --local   # 只编某个条目
 ## 9. CI
 
 `.github/workflows/build.yml`：`discover → build(矩阵) → finalize(串行)`。
-需要的 secret 只有一个 `PACKAGE_REPO_TOKEN`（写第二个仓库用）。定时触发默认关掉
-（`schedule` 被注释），一轮很贵、由人手动 `gh workflow run` 发起。
+需要的 secret 只有一个 `PACKAGE_REPO_TOKEN`（写第二个仓库用）。定时触发每 4 小时一轮
+（`schedule`），改 `config.json` 也会触发一轮；一轮很贵，只想编某个版本时用
+`gh workflow run build.yml -f version=<版本>`。
 一轮的验收就是 `finalize` 里的 `verify`：索引里每个产物的 url/sha256 与线上 release
 逐一比对，对不上会把条目重新排队（见 §8）。
 

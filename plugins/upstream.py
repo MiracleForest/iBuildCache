@@ -12,7 +12,7 @@ means writing framework code:
     "upstream_repo": "LiteLDev/MoreDimensions",
     "recipe_source": "levimc-repo",
     "recipe_package": "more-dimensions",
-    "variants": [{"name": "default", "configs": {}}]
+    "entries": [{"id": "default", "configs": {}}]
   }
 }
 ```

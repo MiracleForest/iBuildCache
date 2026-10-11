@@ -156,7 +156,7 @@ def sync_branch(repo: Path, remote: str = "origin") -> None:
     developer's machine), so a checkout is routinely behind -- and a plain push
     then fails with "non-fast-forward", which is how a local finalize ends up
     doing half its work. Rebasing instead of resetting keeps whatever this
-    checkout produced (a vendored recipe, say) and still fast-forwards.
+    checkout produced (a repaired recipe, say) and still fast-forwards.
     """
     repo = Path(repo)
     if not (repo / ".git").is_dir():
