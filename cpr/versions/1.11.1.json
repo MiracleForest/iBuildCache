@@ -1,0 +1,69 @@
+{
+  "package": "cpr",
+  "version": "1.11.1",
+  "built_at": "2026-10-11T13:47:03Z",
+  "xmake_version": "3.1.1",
+  "toolchain": "msvc",
+  "vs_toolset": "14.51.36231",
+  "revision": 5,
+  "configs": {
+    "target_type": "client"
+  },
+  "alias_profiles": [
+    "msvc",
+    "clang-cl"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@26.40.3",
+  "entries": {
+    "default": {
+      "package": "cpr",
+      "version": "1.11.1",
+      "built_at": "2026-10-11T13:47:03Z",
+      "xmake_version": "3.1.1",
+      "toolchain": "msvc",
+      "vs_toolset": "14.51.36231",
+      "revision": 5,
+      "configs": {
+        "target_type": "client"
+      },
+      "alias_profiles": [
+        "msvc",
+        "clang-cl"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@26.40.3",
+      "artifacts": [
+        {
+          "package": "cpr",
+          "version": "1.11.1",
+          "buildhash": "1c9ad4a4e04341219556b734b3fdce5d",
+          "key": "windows-x64-vc-1c9ad4a4e04341219556b734b3fdce5d",
+          "toolset": "14.51.36231",
+          "release": "cpr_0",
+          "asset": "cpr-1c9ad4a4e04341219556b734b3fdce5d.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/cpr_0/cpr-1c9ad4a4e04341219556b734b3fdce5d.7z",
+          "sha256": "b9e9158cb4bceb01dfe1ee4c6065982c53a97fdab33099f501e774551891e794",
+          "size": 522787,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "3a95096e5c70467fbd5a5d8585343423",
+              "key": "windows-x64-vc-3a95096e5c70467fbd5a5d8585343423",
+              "toolset": "14.51.36231"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "595dddd1bb5443de92a1c339a160d7b8",
+              "key": "windows-x64-vc-595dddd1bb5443de92a1c339a160d7b8",
+              "toolset": "14.51.36231"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

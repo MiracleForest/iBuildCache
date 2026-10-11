@@ -1,0 +1,69 @@
+{
+  "package": "preloader",
+  "version": "v1.16.2",
+  "built_at": "2026-10-11T13:47:03Z",
+  "xmake_version": "3.1.1",
+  "toolchain": "msvc",
+  "vs_toolset": "14.51.36231",
+  "revision": 5,
+  "configs": {
+    "target_type": "client"
+  },
+  "alias_profiles": [
+    "msvc",
+    "clang-cl"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@26.40.3",
+  "entries": {
+    "default": {
+      "package": "preloader",
+      "version": "v1.16.2",
+      "built_at": "2026-10-11T13:47:03Z",
+      "xmake_version": "3.1.1",
+      "toolchain": "msvc",
+      "vs_toolset": "14.51.36231",
+      "revision": 5,
+      "configs": {
+        "target_type": "client"
+      },
+      "alias_profiles": [
+        "msvc",
+        "clang-cl"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@26.40.3",
+      "artifacts": [
+        {
+          "package": "preloader",
+          "version": "v1.16.2",
+          "buildhash": "eb3bd4602e864f98b2d7077a22cca552",
+          "key": "windows-x64-vc-eb3bd4602e864f98b2d7077a22cca552",
+          "toolset": "14.51.36231",
+          "release": "preloader_0",
+          "asset": "preloader-eb3bd4602e864f98b2d7077a22cca552.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/preloader_0/preloader-eb3bd4602e864f98b2d7077a22cca552.7z",
+          "sha256": "d64f31918130579edb55ff1cd99198e01c952194c9497c3da9039b9b9d5ac3cc",
+          "size": 3078303,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "70b6b6539fd840959a98b9b0ebbc92fb",
+              "key": "windows-x64-vc-70b6b6539fd840959a98b9b0ebbc92fb",
+              "toolset": "14.51.36231"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "e7ad469d089e4781af7219c826eee86a",
+              "key": "windows-x64-vc-e7ad469d089e4781af7219c826eee86a",
+              "toolset": "14.51.36231"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

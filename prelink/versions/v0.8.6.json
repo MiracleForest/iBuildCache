@@ -1,0 +1,67 @@
+{
+  "package": "prelink",
+  "version": "v0.8.6",
+  "built_at": "2026-10-11T14:24:03Z",
+  "xmake_version": "3.1.1",
+  "toolchain": "msvc",
+  "vs_toolset": "14.51.36231",
+  "revision": 5,
+  "configs": {
+    "target_type": "client"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "bsci@26.40.0",
+  "entries": {
+    "default": {
+      "package": "prelink",
+      "version": "v0.8.6",
+      "built_at": "2026-10-11T14:24:03Z",
+      "xmake_version": "3.1.1",
+      "toolchain": "msvc",
+      "vs_toolset": "14.51.36231",
+      "revision": 5,
+      "configs": {
+        "target_type": "client"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "bsci@26.40.0",
+      "artifacts": [
+        {
+          "package": "prelink",
+          "version": "v0.8.6",
+          "buildhash": "2af432b8e9844196a88c103051e332ec",
+          "key": "windows-x64-vc-2af432b8e9844196a88c103051e332ec",
+          "toolset": "14.51.36231",
+          "release": "prelink_0",
+          "asset": "prelink-2af432b8e9844196a88c103051e332ec.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/prelink_0/prelink-2af432b8e9844196a88c103051e332ec.7z",
+          "sha256": "6a595d616ed9959aba41db36c3a1a559960a001c45ce1a39b7041f2ad220bd7c",
+          "size": 4283201,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "ddf78d8eb1a64bf0afe44563505f6eb4",
+              "key": "windows-x64-vc-ddf78d8eb1a64bf0afe44563505f6eb4",
+              "toolset": "14.51.36231"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "07f1e481201c4384b51f02afee994e4d",
+              "key": "windows-x64-vc-07f1e481201c4384b51f02afee994e4d",
+              "toolset": "14.51.36231"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
