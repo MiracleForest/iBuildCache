@@ -1,0 +1,180 @@
+"""Load in-tree plugins (``plugins/<name>/plugin.py``)."""
+
+from __future__ import annotations
+
+import importlib.util
+from pathlib import Path
+
+from . import util
+
+
+class Plugin:
+    #: Hooks the framework may call; anything else is a typo and gets reported.
+    KNOWN_HOOKS = {
+        "metadata",
+        "list_versions",
+        "report_skipped",
+        "entries",
+        "configs",
+        "xmake_version",
+        "toolchain",
+        "native_toolchain",
+        "toolchain_aliases",
+        "toolchain_plan",
+        "recipe_cutoff",
+        "git_cutoff",
+        "extra_deps",
+        "dependency_specs",
+        "asset_name",
+        "register_release_columns",
+        "should_skip",
+        "repair_recipes",
+    }
+
+    def __init__(self, name: str, module, path: Path):
+        self.name = name
+        self.module = module
+        self.path = path
+
+    def call(self, function: str, *args, **kwargs):
+        if function not in self.KNOWN_HOOKS:
+            util.warn(f"plugin {self.name}: unknown hook {function!r} (typo?)")
+        handler = getattr(self.module, function, None)
+        if handler is None:
+            return None
+        return handler(*args, **kwargs)
+
+    def has(self, function: str) -> bool:
+        return hasattr(self.module, function)
+
+    # ---------------------------------------------------------------- entries
+    # A "build entry" is whatever a plugin needs to build one package version
+    # more than once (LeviLamina uses server/client, another project may use
+    # debug/release or nothing at all). The framework only ever sees opaque ids
+    # plus the package configs that belong to them.
+    DEFAULT_ENTRY = "default"
+
+    def entries(self, ctx, version: str, commit: str, settings: dict | None = None) -> list[dict]:
+        """``[{id, configs}, ...]`` for one version, provided by the plugin."""
+        handler = getattr(self.module, "entries", None)
+        if handler is not None:
+            found = handler(ctx, version, commit)
+            if found:
+                return [self._normalise_entry(item) for item in found]
+        settings = settings or getattr(self.module, "SETTINGS", {}) or {}
+        declared = settings.get("entries")
+        if declared:
+            return [self._normalise_entry(item) for item in declared]
+        configs = getattr(self.module, "configs", None)
+        return [
+            {
+                "id": self.DEFAULT_ENTRY,
+                "configs": configs(ctx, version, commit) if configs else {},
+            }
+        ]
+
+    @staticmethod
+    def _normalise_entry(item: dict) -> dict:
+        if isinstance(item, str):
+            return {"id": item, "configs": {}}
+        entry = dict(item)
+        entry["id"] = str(entry.get("id") or entry.get("name") or Plugin.DEFAULT_ENTRY)
+        entry.setdefault("configs", {})
+        return entry
+
+
+def load_all(config: dict) -> list[Plugin]:
+    plugins = []
+    for spec in config.get("plugins", []):
+        if not spec.get("enabled", True):
+            continue
+        path = util.ROOT / spec["module"]
+        if not path.is_file():
+            util.die(f"plugin module not found: {path}")
+        module_spec = importlib.util.spec_from_file_location(
+            f"buildcache_plugin_{spec['name']}", path
+        )
+        module = importlib.util.module_from_spec(module_spec)
+        module_spec.loader.exec_module(module)
+        if spec.get("settings") and hasattr(module, "create"):
+            module = module.create(spec["settings"])
+        plugins.append(Plugin(spec["name"], module, path))
+    return plugins
+
+
+def project_packages(config: dict, ctx) -> set[str]:
+    """Names of the packages that *are* one of the configured projects.
+
+    Those are the only ones with a build-entry dimension of their own: everything
+    else a build pulls in is just a dependency.
+    """
+    return {plugin.call("metadata")["package"] for plugin in load_all(config)}
+
+
+class Context:
+    """Everything a plugin may need while discovering or building."""
+
+    def __init__(self, config: dict, proxy: str | None = None, mirrors: dict | None = None):
+        self.config = config
+        self.proxy = proxy
+        self.mirrors: dict = mirrors if mirrors is not None else {}
+        self.index_root = util.absolute(config.get("_index_dir", ".work/index"))
+        self.package_repo = util.ROOT / config.get("_package_repo_dir", ".work/xmake-repo")
+        self.vendor_root = util.ROOT / config.get("_vendor_root", ".vendor")
+
+    def ensure_index(self, create: bool = False) -> Path:
+        """Materialise the index branch (read-only unless ``create``)."""
+        from . import gitops
+
+        cache_cfg = self.config["repos"]["cache"]
+        branch = (self.config.get("repos", {}).get("index") or {}).get("branch", "index")
+        seed = None
+        if create:
+            seed = (
+                "README.md",
+                "# `index`\n\n"
+                "The build ledger, generated by BuildCache. Do not edit by hand.\n\n"
+                "* `README.md` — this file\n"
+                "* `<package>/index.json` — every cached version of that package\n"
+                "* `<package>/versions/<version>.json` — one record per build\n\n"
+                "A record lists the artifacts of each build entry (`id`, package\n"
+                "`configs`, `revision`, `xmake_version`, `toolchain`, plus every\n"
+                "artifact's url/sha256/toolset/buildhash). `revision` is what makes\n"
+                "a fix re-publish old versions: bumping it in `config.json` marks\n"
+                "older records as stale and `discover` queues them again.\n\n"
+                "The record is keyed by the *published* package and only holds its\n"
+                "own artifacts. A build entry dimension (LeviLamina's server/client)\n"
+                "belongs to the project that has one: its own package is recorded\n"
+                "per entry, while every dependency is recorded once, under `default`,\n"
+                "because it is the same artifact whichever entry pulled it in. The\n"
+                "same records are also written under the upstream name, which is\n"
+                "what publishes `<letter>/<name>/<version>/manifest.txt` for projects\n"
+                "that require the upstream package from their own repository.\n\n"
+                "`alias_profiles` names the extra consumer toolchains an entry was\n"
+                "published for. Each artifact may then carry `aliases`: manifest\n"
+                "entries that address the very same archive with a build hash\n"
+                "recomputed for another toolchain. Declaring a new profile in a\n"
+                "plugin re-queues the entries that predate it.\n",
+            )
+        return gitops.ensure_branch(
+            self.config,
+            cache_cfg["owner"],
+            cache_cfg["repo"],
+            branch,
+            self.index_root,
+            seed=seed,
+            proxy=self.proxy,
+        )
+
+    def mirror(self, name: str, url: str) -> Path:
+        from . import repos
+
+        if name not in self.mirrors:
+            self.mirrors[name] = repos.mirror(self.config, name, url, proxy=self.proxy)
+        return self.mirrors[name]
+
+    def recipe_source(self, name: str) -> Path | None:
+        for source in self.config.get("recipes", {}).get("sources", []):
+            if source["name"] == name:
+                return self.mirror(name, source["url"])
+        return None

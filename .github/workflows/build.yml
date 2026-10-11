@@ -1,0 +1,170 @@
+name: Build SDK
+
+on:
+  # A round is incremental: `discover` only queues what is missing or built by an
+  # older revision, so a run with nothing to do costs a couple of minutes of
+  # discovery and no build jobs at all -- which is what makes a frequent schedule
+  # affordable, and what drains a backlog of versions a few per run. `batch` is
+  # *per plugin*, and every entry of a version is its own job, so the number of
+  # jobs a run queues is roughly batch x plugins x entries.
+  schedule:
+    - cron: "0 */4 * * *"
+  # A `revision` bump (or a new plugin) in config.json is the signal "everything
+  # published so far is stale": the backlog then drains a few versions per run.
+  push:
+    paths:
+      - config.json
+  workflow_dispatch:
+    inputs:
+      plugin:
+        description: only build this plugin
+        default: ""
+      version:
+        description: only build this exact SDK version
+        default: ""
+      batch:
+        description: versions per plugin, newest first (jobs ≈ batch x plugins x entries)
+        default: "2"
+      first_only:
+        description: only the newest version
+        type: boolean
+        default: false
+      rebuild_all:
+        description: ignore what is already published
+        type: boolean
+        default: false
+      finalize_only:
+        description: only run finalize, against the results of this earlier run id (no build)
+        default: ""
+
+permissions:
+  contents: write
+
+# One round at a time: a scheduled run, a revision bump and a manual catch-up can
+# otherwise build the same version twice and pack the same archives concurrently.
+concurrency:
+  group: buildcache-round
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: windows-latest
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Discover
+        id: discover
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          python scripts/discover.py `
+            --plugin "${{ inputs.plugin }}" `
+            --version "${{ inputs.version }}" `
+            --batch "${{ inputs.batch || '2' }}" `
+            --report-skipped
+
+  build:
+    needs: discover
+    if: needs.discover.outputs.matrix != '[]'
+    # The era of the version decides the image: ancient tags need an MSVC of
+    # their own generation (see plugins/ll/plugin.py::toolchain_plan).
+    runs-on: ${{ matrix.image || 'windows-latest' }}
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        include: ${{ fromJson(needs.discover.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      # Newer LeviLamina tags want clang-cl of the same generation; the
+      # image's own LLVM is older than that.
+      - name: Setup LLVM
+        uses: ZhongRuoyu/setup-llvm@v0
+        with:
+          llvm-version: 22
+      # Which MSVC generations and platform toolsets this image has, so an era
+      # failure can be read without guessing.
+      - name: MSVC diagnostics
+        if: always()
+        shell: pwsh
+        run: |
+          $vs = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise"
+          foreach ($path in @("$vs\VC\Tools\MSVC",
+                              "$vs\MSBuild\Microsoft\VC\v170\Platforms\x64\PlatformToolsets")) {
+            Write-Output "== $path"
+            if (Test-Path $path) {
+              Write-Output ("   " + ((Get-ChildItem $path | Select-Object -ExpandProperty Name) -join ", "))
+            }
+            else { Write-Output "  (missing)" }
+          }
+          Write-Output "== vswhere"
+          & "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" `
+            -products * -latest -property installationVersion
+      - name: Build ${{ matrix.package }} ${{ matrix.version }}
+        timeout-minutes: 180
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/build.py --plugin "${{ matrix.plugin }}" `
+            --version "${{ matrix.version }}" `
+            --entry "${{ matrix.entry }}" `
+            --commit "${{ matrix.commit }}" `
+            ${{ matrix.vs_toolset && format('--vs-toolset={0}', matrix.vs_toolset) || '' }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-result-${{ matrix.plugin }}-${{ strategy.job-index }}
+          path: results/build-result-*.json
+          if-no-files-found: ignore
+
+  finalize:
+    needs: build
+    if: always() && (needs.build.result != 'skipped' || inputs.finalize_only != '')
+    runs-on: windows-latest
+    concurrency:
+      group: buildcache-finalize
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - uses: actions/download-artifact@v4
+        if: inputs.finalize_only == ''
+        with:
+          pattern: build-result-*
+          merge-multiple: true
+          path: results
+      # Nothing was built here: take the results of the round given as input, so
+      # the last step can be re-run (a credential fix, say) without recompiling.
+      - name: Take the results of that round
+        if: inputs.finalize_only != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run download "${{ inputs.finalize_only }}" --repo "${{ github.repository }}" `
+            --pattern "build-result-*" --dir downloaded
+          New-Item -ItemType Directory -Force -Path results | Out-Null
+          Get-ChildItem -Path downloaded -Recurse -Filter "build-result-*.json" |
+            Move-Item -Destination results
+      - name: Configure git
+        run: |
+          # The scripts also pass -c user.name/-c user.email from config.json;
+          # this only covers git calls that are not wrapped by them.
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Update index and manifests
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILDCACHE_PUSH_TOKEN: ${{ secrets.PACKAGE_REPO_TOKEN }}
+        run: python scripts/finalize.py --push
+
