@@ -70,6 +70,19 @@ discover ──► build (per SDK version)                   ──► finalize
    * An artifact whose exact build is already published is reused instead of
      packed again: the build hash *is* the identity of a build. Bump `revision`
      in `config.json` to say "everything built before me is stale".
+   * The sandbox is handed the manifests of everything already published, as its
+     *binary* repository, so a dependency installs from the cache instead of being
+     compiled all over again. xmake looks a manifest up in every repository it has
+     loaded, and without one it compiles: LeviLamina is the dependency each plugin
+     shares, so each plugin's round would otherwise rebuild the whole SDK.
+   * A dependency that one of *our* plugins publishes -- LeviLamina, for each of
+     its plugins -- is planned as its own job, *ahead* of the dependent, when the
+     ledger has no artifact for the version that dependent resolves (the version
+     is read from the recipes, era table included). A round therefore runs in two
+     stages: the SDKs first, then the plugins, which turn the first stage's build
+     results into manifests of their own. A job cannot see another job's files,
+     and this is what makes the SDK build happen once per round instead of once
+     per plugin.
    * Packing writes no timestamps, so packing the *same* install directory twice
      gives the same bytes. Two jobs that each compiled the same dependency can
      still end up with different archives (the objects carry their own build

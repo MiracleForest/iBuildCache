@@ -88,6 +88,15 @@ def upstream_xmake_lua(ctx, commit: str) -> str:
     return repos.file_at(_upstream_dir(ctx), commit, "xmake.lua")
 
 
+def recipe_dir(ctx, version: str = "", commit: str = ""):
+    """Where this project's recipe lives, so a round can read its dependencies."""
+    try:
+        source = _recipe_dir(ctx)
+    except RuntimeError:
+        return None
+    return source / "packages" / RECIPE_PACKAGE[0] / RECIPE_PACKAGE
+
+
 def toolchain(ctx, version: str, commit: str) -> str:
     """Toolchain used to *build* the cached packages.
 

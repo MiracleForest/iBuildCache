@@ -19,7 +19,9 @@ from lib import (  # noqa: E402
     gh,
     git_shim,
     gitops,
+    manifest as manifest_lib,
     packer,
+    plan,
     plugins,
     sources,
     util,
@@ -29,7 +31,7 @@ from lib import (  # noqa: E402
 
 def build_once(config, ctx, plugin, args, *, plat, arch, toolchain, vs_toolset,
                xmake_version, commit, require, configs, entry, proxy,
-               recipe_cutoff: str, git_cutoff: str, plans: list[tuple[bool, str]]):
+               recipe_cutoff: str, git_cutoff: str, binary_repo, plans: list[tuple[bool, str]]):
     """Build the closure in the first sandbox that configures and exports.
 
     A plan is ``(use_today, label)``. The first one takes the dependencies from
@@ -48,7 +50,6 @@ def build_once(config, ctx, plugin, args, *, plat, arch, toolchain, vs_toolset,
     """
     own = plugin.call("metadata")["package"]
     overlay = (f"packages/{own[0].lower()}/{own}",)
-    empty_repo = util.ensure_dir(util.sandbox_root(config) / "empty-repo")
     attempts = int(config.get("xmake", {}).get("installRetries", 3))
     last = "nothing to try"
 
@@ -72,8 +73,15 @@ def build_once(config, ctx, plugin, args, *, plat, arch, toolchain, vs_toolset,
         # recipe lookup for a package has to follow the same order.
         repo_order = local_repos + [("xmake-repo", main_repo)]
         requires = [f'add_requires("{require}", {{configs = {_lua_table(configs)}}})']
+        # The project's own file may name a dependency its recipe already pins to
+        # another version; asking for both would build a second SDK nobody uses.
         requires += extra_requires(
-            ctx, repo_order, plugin.call("extra_deps", ctx, args.version, commit) or []
+            ctx,
+            repo_order,
+            plan.extra_deps(
+                plugin, ctx, args.version, commit,
+                _own_recipe_dir(prepared, own),
+            ),
         )
         suffix = "" if use_today else "-era"
         sandbox = xmake_env.create_sandbox(
@@ -84,7 +92,7 @@ def build_once(config, ctx, plugin, args, *, plat, arch, toolchain, vs_toolset,
             toolchain=None if toolchain == "msvc" else toolchain,
             repositories=local_repos,
             main_repo=main_repo,
-            binary_repo=empty_repo,
+            binary_repo=binary_repo,
             extra_lua="\n".join(requires),
         )
         git_shim.install(config, sandbox.env, git_cutoff)
@@ -153,12 +161,105 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keep-sandbox", action="store_true")
     parser.add_argument("--proxy", default=None)
     parser.add_argument("--results", default="results", help="directory for build-result JSON files")
+    parser.add_argument(
+        "--dependency-results",
+        default="",
+        help="directory of build results to reuse: the SDK stage's output, when this "
+        "job depends on a package another job in the same round just published",
+    )
     parser.add_argument("--shared-cache", default=".work/pkgcache", help="reused xmake package cache")
     return parser.parse_args()
 
 
 def now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _own_recipe_dir(prepared: dict, package: str):
+    """The project's own recipe inside the snapshots this plan builds from."""
+    for _name, (directory, _sha) in (prepared or {}).items():
+        candidate = Path(directory) / "packages" / package[0].lower() / package
+        if (candidate / "xmake.lua").is_file():
+            return candidate
+    return None
+
+
+def published_manifests(config: dict, ctx, results_dir: str = "") -> Path:
+    """A local repository of every artifact this cache has already published.
+
+    xmake resolves a precompiled artifact by looking for
+    ``packages/<letter>/<package>/<version>/manifest.txt`` in *every* repository it
+    has loaded (``artifacts_manifest()``), so a sandbox that carries the recipe
+    snapshots only never sees ours -- and then compiles the whole closure from
+    source, once per project, every round. LeviLamina is the dependency every
+    plugin shares, so the cost lands on each of them.
+
+    The manifests are generated from the ledger, i.e. from the same data
+    ``finalize`` publishes, and handed over as xmake's *binary* repository. That
+    is also what keeps the official precompiled mirror out of the picture: one
+    repository, and it is ours.
+
+    A ledger that cannot be read (a network hiccup) leaves an empty repository
+    behind, which is the behaviour this used to have: everything compiles.
+
+    Only entries of the *current* revision are offered: a bumped revision says
+    every earlier build is stale, and handing xmake the older artifact would
+    quietly undo that.
+
+    ``results_dir`` adds the artifacts a *job of this round* has just published.
+    The ledger cannot know about them yet -- ``finalize`` writes it at the end --
+    and a job cannot see another job's files, but the workflow hands its build
+    results over, and those carry exactly what a manifest needs.
+
+    Both are reconciled against the releases first: two jobs share their closure,
+    so an asset can be uploaded twice in one round, and a manifest that names the
+    upload that lost fails every consumer with "unmatched checksum" -- xmake does
+    not fall back to compiling when a checksum disagrees, it stops.
+    """
+    directory = util.sandbox_root(config) / "binary-repo"
+    util.rmtree(directory)
+    digests = None
+    try:
+        from lib import verify
+
+        cache_cfg = config["repos"]["cache"]
+        digests = verify.published_digests(config, cache_cfg["owner"], cache_cfg["repo"])
+    except Exception as error:  # noqa: BLE001 - the recorded digests still work
+        util.warn(f"cannot read the published digests, using the recorded ones: {error}")
+    try:
+        ctx.ensure_index()
+        written = manifest_lib.write_repo(
+            ctx.index_root,
+            directory,
+            revision=int(config.get("revision", 1)),
+            digests=digests,
+        )
+    except Exception as error:  # noqa: BLE001 - the build goes on without reuse
+        util.warn(f"cannot read the ledger, nothing precompiled will be reused: {error}")
+        util.ensure_dir(directory)
+        return directory
+    if results_dir:
+        results = [
+            util.read_json(path, None)
+            for path in sorted(Path(results_dir).glob("build-result-*.json"))
+        ]
+        fresh = manifest_lib.write_results(results, directory, digests=digests)
+        if fresh:
+            total_fresh = sum(len(versions) for versions in fresh.values())
+            util.log(
+                f"this round published {total_fresh} package version(s) that this "
+                f"build can already reuse"
+            )
+    # It has to exist even when nothing was written: xmake takes an existing
+    # directory as a repository and anything else as a URL, and then tries to
+    # *clone* it ("execv(git clone ... binary-repo) failed") for every package.
+    util.ensure_dir(directory)
+    total = sum(len(versions) for versions in written.values())
+    util.log(
+        f"precompiled artifacts on offer: {total} package version(s) "
+        f"in {len(written)} package(s)"
+    )
+    return directory
 
 
 def main() -> int:
@@ -216,13 +317,16 @@ def main() -> int:
     cutoff_for_recipes = plugin.call("recipe_cutoff", ctx, args.version, commit)
     changed = sources.sources_changed(config, ctx, cutoff_for_recipes)
     plans = [(True, args.version)] if not changed else [(True, args.version), (False, args.version)]
+    # What the cache has already published, handed to xmake as its binary
+    # repository: a dependency then installs instead of being compiled again.
+    binary_repo = published_manifests(config, ctx, args.dependency_results)
     sandbox, prepared, recipe_commits, used_today, repo_order = build_once(
         config, ctx, plugin, args,
         plat=plat, arch=arch, toolchain=toolchain, vs_toolset=vs_toolset,
         xmake_version=xmake_version, commit=commit, require=require, configs=configs,
         entry=entry, proxy=proxy,
         recipe_cutoff=cutoff_for_recipes, git_cutoff=cutoff,
-        plans=plans,
+        binary_repo=binary_repo, plans=plans,
     )
 
     util.log_step("publish artifacts")
@@ -246,6 +350,7 @@ def main() -> int:
             config, ctx, plugin, args, plat, arch, toolchain, vs_toolset,
             commit=commit, dry_run=args.dry_run,
             specs=plugin.call("dependency_specs", ctx, args.version, commit) or [],
+            binary_repo=binary_repo,
         )
     )
     if deps:
@@ -266,7 +371,7 @@ def main() -> int:
 
 
 def build_dependency_pass(config, ctx, plugin, args, plat, arch, toolchain, vs_toolset,
-                          *, commit, dry_run, specs) -> list[dict]:
+                          *, commit, dry_run, specs, binary_repo=None) -> list[dict]:
     """Publish the dependencies at the addresses a *consumer* resolves.
 
     The era build uses the recipes of the version's own date. That is what the
@@ -303,7 +408,7 @@ def build_dependency_pass(config, ctx, plugin, args, plat, arch, toolchain, vs_t
             toolchain=None if toolchain == "msvc" else toolchain,
             repositories=local_repos,
             main_repo=main_repo,
-            binary_repo=util.ensure_dir(util.sandbox_root(config) / "empty-repo"),
+            binary_repo=binary_repo or published_manifests(config, ctx),
             extra_lua="\n".join(f'add_requires("{spec}")' for spec in specs),
         )
         result = sandbox.configure(toolchain, vs_toolset, plat, arch, stream=True, check=False)
@@ -578,8 +683,6 @@ def _publish_one(config, ctx, sandbox, dist, owner, repo, max_assets, plugin,
                  name, version, hash_dir, plat, arch, toolset,
                  repo_order=None, commit="", toolchain="msvc", root_package="",
                  target_branch=None, dry_run=False, force=False) -> dict | None:
-    from lib import manifest as manifest_lib
-
     if not should_publish(name, root_package, hash_dir):
         # A dependency with nothing compiled in it: an archive would save a
         # consumer nothing, so it does not get one.

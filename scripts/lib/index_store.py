@@ -82,6 +82,22 @@ def built_entries_with_profiles(
     return found
 
 
+def has_artifacts(index_root: Path, package: str, version: str, revision: int | None = None) -> bool:
+    """Is there an artifact for this package version that a build could reuse?
+
+    ``revision`` filters the same way a build's manifest repository does: only
+    entries of the current revision are offered to xmake, so only those can be
+    reused. A dependency that has nothing to offer is what makes a round plan the
+    dependency's own build instead of letting the dependent compile it.
+    """
+    for entry in entries(version_meta(index_root, package, version)).values():
+        if revision is not None and int(entry.get("revision") or 0) != int(revision):
+            continue
+        if entry.get("artifacts"):
+            return True
+    return False
+
+
 def entry_artifacts(index_root: Path, package: str, version: str, entry_id: str) -> list[dict]:
     entry = entries(version_meta(index_root, package, version)).get(entry_id) or {}
     return list(entry.get("artifacts") or [])

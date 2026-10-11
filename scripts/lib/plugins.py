@@ -25,6 +25,7 @@ class Plugin:
         "git_cutoff",
         "extra_deps",
         "dependency_specs",
+        "recipe_dir",
         "asset_name",
         "register_release_columns",
         "should_skip",

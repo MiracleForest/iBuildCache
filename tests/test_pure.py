@@ -22,6 +22,7 @@ from lib import (  # noqa: E402
     hashprobe,
     index_store,
     manifest,
+    plan,
     plugins,
     recipefix,
     reports,
@@ -86,6 +87,106 @@ def test_manifest_round_trip(tmp_path: Path):
     assert manifest.read(tmp_path, "fmt", "11.2.0") == entries
 
 
+def test_manifests_are_generated_from_the_ledger(tmp_path: Path):
+    """The repo a build hands xmake and the one a consumer reads are one generator."""
+    index_root = tmp_path / "index"
+    repo = tmp_path / "binary-repo"
+    artifact = {
+        "package": "levilamina",
+        "version": "26.51.6",
+        "buildhash": "ee1902dd",
+        "key": "windows-x64-vc-ee1902dd",
+        "toolset": "14.44.35207",
+        "url": "https://example.invalid/levilamina.7z",
+        "sha256": "ab" * 32,
+        "aliases": [
+            {
+                "id": "clang-cl",
+                "buildhash": "df51e1a2",
+                "key": "windows-x64-vc-df51e1a2",
+                "toolset": "14.44.35207",
+            }
+        ],
+    }
+    index_store.write_entry(
+        index_root, "levilamina", "26.51.6", "server", {"revision": 1, "artifacts": [artifact]}
+    )
+
+    written = manifest.write_repo(index_root, repo)
+
+    assert written == {"levilamina": {"26.51.6"}}
+    entries = manifest.read(repo, "levilamina", "26.51.6")
+    assert set(entries) == {"windows-x64-vc-ee1902dd", "windows-x64-vc-df51e1a2"}
+    # one archive, two addresses: the alias points at the same bytes
+    assert entries["windows-x64-vc-df51e1a2"] == entries["windows-x64-vc-ee1902dd"]
+
+
+def test_the_build_offers_the_published_manifests_to_xmake(tmp_path: Path, monkeypatch):
+    """A dependency installs from the cache instead of being compiled again.
+
+    xmake looks a manifest up in every repository it loaded, so the sandbox gets a
+    repository generated from the ledger; without it LeviLamina is rebuilt once
+    per plugin, every round.
+    """
+    config = dict(util.load_config())
+    sandbox_root = tmp_path / "sandbox"
+    index_root = tmp_path / "index"
+    config["paths"] = {"sandboxRoot": str(sandbox_root)}
+    config["_index_dir"] = str(index_root)
+    revision = int(config["revision"])
+    index_store.write_entry(
+        index_root,
+        "levilamina",
+        "26.51.6",
+        "server",
+        {
+            "revision": revision,
+            "artifacts": [
+                {
+                    "package": "levilamina",
+                    "version": "26.51.6",
+                    "buildhash": "ee1902dd",
+                    "key": "windows-x64-vc-ee1902dd",
+                    "toolset": "14.44.35207",
+                    "asset": "levilamina-ee1902dd.7z",
+                    "url": "https://example.invalid/levilamina.7z",
+                    "sha256": "ab" * 32,
+                }
+            ],
+        },
+    )
+    context = plugins.Context(config)
+    monkeypatch.setattr(plugins.Context, "ensure_index", lambda self, create=False: self.index_root)
+    # what the release serves for that asset (the digests are what decides the entry)
+    monkeypatch.setattr(
+        "lib.verify.published_digests",
+        lambda config, owner, repo: {"levilamina-ee1902dd.7z": {"sha256": "ab" * 32, "size": 7}},
+    )
+
+    repo = build.published_manifests(config, context)
+
+    assert repo == sandbox_root / "binary-repo"
+    assert manifest.read(repo, "levilamina", "26.51.6")
+    # the directory has to exist even when nothing was written: xmake reads an
+    # existing directory as a repository and anything else as a URL to clone
+    assert repo.is_dir()
+    empty = dict(config)
+    empty["_index_dir"] = str(tmp_path / "no-index")
+    assert build.published_manifests(empty, context).is_dir()
+    # a bumped revision says the earlier build is stale: the build is not offered
+    # the artifact it would otherwise silently keep reusing
+    stale = dict(config)
+    stale["revision"] = revision + 1
+    assert manifest.read(build.published_manifests(stale, context), "levilamina", "26.51.6") == {}
+    # a ledger that cannot be read leaves an empty repository behind, i.e. the
+    # behaviour this had before: everything is compiled
+    monkeypatch.setattr(
+        plugins.Context, "ensure_index", lambda self, create=False: (_ for _ in ()).throw(OSError())
+    )
+    assert build.published_manifests(config, context) == repo
+    assert manifest.read(repo, "levilamina", "26.51.6") == {}
+
+
 def test_build_id_matches_xmake_contract():
     # xmake matches on "<plat>-<arch>-vc..." prefix and a "-<buildhash>" suffix.
     key = manifest.build_id("windows", "x64", "14.44.35207", "deadbeef")
@@ -148,6 +249,269 @@ def test_entry_keeps_the_profiles_it_was_built_for(tmp_path: Path):
         )
         == set()
     )
+
+
+class _FakePlugin:
+    """A plugin with the hooks a plan reads; the real ones talk to mirrors."""
+
+    def __init__(self, name, package, *, versions=(), entries=(), specs=(), extra=(),
+                 skip=(False, "")):
+        self.name = name
+        self._package = package
+        self._versions = list(versions)
+        self._entries = list(entries)
+        self._specs = list(specs)
+        self._extra = list(extra)
+        self._skip = skip
+
+    def call(self, function, *args, **kwargs):
+        if function == "metadata":
+            return {"package": self._package}
+        if function == "list_versions":
+            return [
+                {"version": item["version"], "commit": item.get("commit", "")}
+                for item in self._versions
+            ]
+        if function == "extra_deps":
+            return [{"name": name, "version": version} for name, version in self._extra]
+        if function == "dependency_specs":
+            return list(self._specs)
+        if function == "should_skip":
+            return self._skip
+        if function == "recipe_dir":
+            return None
+        if function == "toolchain_plan":
+            return {}
+        return None
+
+    def entries(self, ctx, version, commit):
+        return list(self._entries)
+
+
+def _levilamina_plugin():
+    return _FakePlugin(
+        "ll",
+        "levilamina",
+        versions=[{"version": "1.9.9", "commit": "aaa"}],
+        entries=[{"id": "server", "configs": {}}, {"id": "client", "configs": {}}],
+    )
+
+
+def _dependent(name, version, commit):
+    return _FakePlugin(
+        name,
+        name,
+        versions=[{"version": version, "commit": commit}],
+        entries=[{"id": "default", "configs": {}}],
+        specs=["levilamina >=1.9.2 <1.10.0"],
+    )
+
+
+def test_a_constraint_is_read_the_way_the_recipes_write_it():
+    assert plan.satisfies("1.9.9", ">=1.9.2 <1.10.0")
+    assert not plan.satisfies("1.8.0-rc.2", ">=1.9.2 <1.10.0")
+    assert plan.satisfies("0.13.0", "0.13.*")
+    assert not plan.satisfies("0.14.1", "0.13.*")
+    assert plan.satisfies("26.40.3", ">=26.40 <27")
+    assert plan.satisfies("1.4.4", "")
+    assert plan.satisfies("1.4.4", "*")
+    # `~`/`^` are not guessed: a wrong answer would plan the wrong SDK version
+    import pytest
+
+    with pytest.raises(ValueError):
+        plan.satisfies("1.9.9", "~1.9")
+    assert plan.pick(["1.9.2", "1.9.9", "1.8.0"], ">=1.9.2 <1.10.0") == "1.9.9"
+    assert plan.pick(["1.9.2"], "~1.9") is None
+
+
+def test_the_era_dependency_table_is_read(tmp_path: Path):
+    """LeviLamina's plugins declare their SDK dependency per version range.
+
+    `more-dimensions` has no `add_deps` at all: the dependency that makes it need
+    LeviLamina 1.9.9 lives in the table keyed by `0.13.*`.
+    """
+    recipe = tmp_path / "packages" / "m" / "more-dimensions"
+    recipe.mkdir(parents=True)
+    (recipe / "xmake.lua").write_text(
+        'package("more-dimensions")\n'
+        "    local dependencies = {\n"
+        '        ["0.13.*"] = {"levilamina >=1.9.2 <1.10.0"},\n'
+        '        ["0.14.*"] = {"levilamina 26.20.*"},\n'
+        "    }\n",
+        encoding="utf-8",
+    )
+    assert plan.recipe_specs(recipe, "0.13.0") == ["levilamina >=1.9.2 <1.10.0"]
+    assert plan.recipe_specs(recipe, "0.14.1") == ["levilamina 26.20.*"]
+    assert plan.recipe_specs(recipe, "0.12.2") == []
+
+
+def test_an_extra_require_the_recipe_already_declares_is_dropped(tmp_path: Path):
+    """A project's own file and its recipe can pin different versions of one SDK.
+
+    `more-dimensions` 0.13.0 names `levilamina 1.9.4` in its own xmake.lua while
+    its recipe resolves to 1.9.9. Asking for both installs both -- xmake keeps the
+    second as `levilamina_1` -- so the build downloads 1.9.9 from the cache and
+    compiles a whole 1.9.4 nobody asked for. The recipe is what a consumer
+    resolves, so it decides; only a dependency the recipe says nothing about (how
+    `bsci` gets LeviLamina) survives.
+    """
+    recipe = tmp_path / "packages" / "m" / "more-dimensions"
+    recipe.mkdir(parents=True)
+    (recipe / "xmake.lua").write_text(
+        'package("more-dimensions")\n'
+        '        ["0.13.*"] = {"levilamina >=1.9.2 <1.10.0"},\n',
+        encoding="utf-8",
+    )
+    pinned = _FakePlugin(
+        "moredimensions", "more-dimensions", extra=[("levilamina", "1.9.4")]
+    )
+    assert plan.extra_deps(pinned, None, "0.13.0", "bbb", recipe) == []
+    assert plan.dependency_specs(pinned, None, "0.13.0", "bbb", recipe) == [
+        "levilamina >=1.9.2 <1.10.0"
+    ]
+    silent = _FakePlugin("bsci", "bsci", extra=[("levilamina", "26.51.0")])
+    assert plan.extra_deps(silent, None, "26.40.0", "ccc", None) == [
+        {"name": "levilamina", "version": "26.51.0"}
+    ]
+
+
+def test_an_sdk_the_ledger_lacks_is_built_ahead_of_its_plugins():
+    """A plugin would otherwise compile the whole SDK itself, every round."""
+    ll = _levilamina_plugin()
+    md = _dependent("moredimensions", "0.13.0", "bbb")
+    jobs = [plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"})]
+
+    first, waiting, notes = plan.split({}, None, [ll, md], jobs, lambda package, version: False)
+
+    assert notes == []
+    assert [(item["plugin"], item["version"], item["entry"]) for item in first] == [
+        ("ll", "1.9.9", "server"),
+        ("ll", "1.9.9", "client"),
+    ]
+    assert [item["plugin"] for item in waiting] == ["moredimensions"]
+    assert waiting[0]["waits_for"] == ["levilamina@1.9.9"]
+
+
+def test_a_published_sdk_is_reused_and_nothing_waits():
+    ll = _levilamina_plugin()
+    md = _dependent("moredimensions", "0.13.0", "bbb")
+    jobs = [plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"})]
+
+    first, waiting, notes = plan.split(
+        {}, None, [ll, md], jobs, lambda package, version: package == "levilamina"
+    )
+
+    assert notes == []
+    assert waiting == []
+    assert [(item["plugin"], item["version"]) for item in first] == [("moredimensions", "0.13.0")]
+
+
+def test_two_dependents_share_one_sdk_build():
+    ll = _levilamina_plugin()
+    one = _dependent("bsci", "26.40.0", "ccc")
+    two = _dependent("moredimensions", "0.13.0", "ddd")
+    jobs = [
+        plan.job({}, None, one, "26.40.0", "ccc", {"id": "default"}),
+        plan.job({}, None, two, "0.13.0", "ddd", {"id": "default"}),
+    ]
+
+    first, waiting, _notes = plan.split({}, None, [ll, one, two], jobs, lambda p, v: False)
+
+    assert [(item["plugin"], item["version"]) for item in first] == [
+        ("ll", "1.9.9"),
+        ("ll", "1.9.9"),
+    ]
+    assert len(waiting) == 2
+
+
+def test_a_dependency_that_cannot_be_resolved_does_not_block_anything():
+    """Nothing waits for something nobody can name: it builds as it always did."""
+    ll = _levilamina_plugin()
+    md = _FakePlugin(
+        "moredimensions",
+        "more-dimensions",
+        versions=[{"version": "0.13.0", "commit": "bbb"}],
+        entries=[{"id": "default", "configs": {}}],
+        specs=["levilamina ~1.9"],
+    )
+    jobs = [plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"})]
+
+    first, waiting, notes = plan.split({}, None, [ll, md], jobs, lambda package, version: False)
+
+    assert waiting == []
+    assert [item["plugin"] for item in first] == ["moredimensions"]
+    assert notes and "cannot resolve" in notes[0]
+
+
+def test_the_revision_gate_decides_whether_a_dependency_can_be_reused(tmp_path: Path):
+    index_root = tmp_path / "index"
+    index_store.write_entry(
+        index_root, "levilamina", "1.9.9", "server", {"revision": 4, "artifacts": [{"key": "k"}]}
+    )
+    assert index_store.has_artifacts(index_root, "levilamina", "1.9.9", 4)
+    # built by an older revision: a build is not offered it, so it cannot reuse it
+    assert not index_store.has_artifacts(index_root, "levilamina", "1.9.9", 5)
+    assert not index_store.has_artifacts(index_root, "levilamina", "1.9.8", 4)
+
+
+def test_a_job_reuses_what_the_round_just_published(tmp_path: Path):
+    """The SDK stage's results become manifests for the stage that depends on them."""
+    def artifact(package, key, asset):
+        return {
+            "package": package,
+            "version": "11.2.0",
+            "buildhash": key,
+            "key": key,
+            "asset": asset,
+            "url": f"https://x/{asset}",
+            "sha256": "ab" * 32,
+        }
+
+    repo = tmp_path / "binary-repo"
+    manifest.write_all(
+        repo,
+        "levilamina",
+        "1.9.9",
+        {"windows-x64-vc-old": {"urls": "https://x/old.7z", "sha256": "ff" * 32}},
+    )
+    fresh = {
+        "package": "levilamina",
+        "version": "1.9.9",
+        "entry": "server",
+        "artifacts": [
+            {
+                "package": "levilamina",
+                "version": "1.9.9",
+                "buildhash": "new",
+                "key": "windows-x64-vc-new",
+                "url": "https://x/new.7z",
+                "sha256": "ab" * 32,
+                "toolset": "14.51.36231",
+                "aliases": [{"key": "windows-x64-vc-new-alias", "toolchain": "clang-cl"}],
+            }
+        ],
+    }
+
+    written = manifest.write_results([fresh], repo)
+
+    assert written == {"levilamina": {"1.9.9"}}
+    entries = manifest.read(repo, "levilamina", "1.9.9")
+    # merged: the address the ledger had is still there
+    assert set(entries) == {"windows-x64-vc-old", "windows-x64-vc-new", "windows-x64-vc-new-alias"}
+    assert entries["windows-x64-vc-new-alias"] == entries["windows-x64-vc-new"]
+
+    # and the digest is the one the release serves, not the one the result recorded
+    lost = [dict(fresh, artifacts=[artifact("fmt", "windows-x64-vc-h", "fmt-h.7z")])]
+    written = manifest.write_results(
+        lost, repo, digests={"fmt-h.7z": {"sha256": "cd" * 32, "size": 7}}
+    )
+    assert written == {"fmt": {"11.2.0"}}
+    assert manifest.read(repo, "fmt", "11.2.0")["windows-x64-vc-h"]["sha256"] == "cd" * 32
+    # an artifact the release does not serve is left out: no entry means "build it",
+    # while an entry pointing at nothing stops xmake with "unmatched checksum"
+    missing = [dict(fresh, artifacts=[artifact("gone", "windows-x64-vc-x", "gone.7z")])]
+    assert manifest.write_results(missing, repo, digests={}) == {}
+    assert manifest.read(repo, "gone", "11.2.0") == {}
 
 
 # ------------------------------------------------------------------------ config
@@ -972,6 +1336,39 @@ def test_repaired_versions_are_renamed_where_the_resolver_reads_them(tmp_path: P
     assert '"bdslibrary 1.21.0-r3"' in (root / "versions" / "0_13_5.lua").read_text(
         encoding="utf-8"
     )
+
+
+def test_a_declared_recipe_edit_repairs_what_xmake_cannot_import(tmp_path: Path):
+    """`more-dimensions` asks to import `package.tools.*make`, which never resolves.
+
+    A module name is a *path* in xmake's importer (the dots become separators and
+    that file is looked up), so a wildcard is not a pattern there in any version:
+    the install dies with "cannot import module: ... not found!" before a single
+    file is compiled. The repair is project knowledge and therefore declared in
+    the project's own settings; it only ever touches our snapshot.
+    """
+    config = util.load_config()
+    plugin = next(
+        item for item in plugins.load_all(config) if item.name == "moredimensions"
+    )
+    snapshot = tmp_path / "levimc-repo@test"
+    recipe = snapshot / "packages" / "m" / "more-dimensions" / "xmake.lua"
+    recipe.parent.mkdir(parents=True)
+    recipe.write_text(
+        'package("more-dimensions")\n'
+        "    on_install(function (package)\n"
+        '        import("package.tools.*make").install(package)\n'
+        "    end)\n",
+        encoding="utf-8",
+    )
+
+    notes = plugin.module.repair_recipes(config, "levimc-repo", snapshot)
+    assert len(notes) == 1, notes
+    assert 'import("package.tools.xmake")' in util.read_text(recipe)
+    # a source that does not carry this project's recipe is left alone, and the
+    # repair is idempotent: a second pass has nothing left to replace
+    assert plugin.module.repair_recipes(config, "xmake-repo", snapshot) == []
+    assert plugin.module.repair_recipes(config, "levimc-repo", snapshot) == []
 
 
 def test_upstream_pins_are_rewritten_while_the_project_builds(tmp_path: Path):
