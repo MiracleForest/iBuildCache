@@ -1,0 +1,140 @@
+{
+  "plugin": "bsci",
+  "package": "bsci",
+  "version": "0.3.1",
+  "entry": "server",
+  "configs": {
+    "target_type": "server"
+  },
+  "revision": 5,
+  "upstream_commit": "b1edcd3951b18d99b5e6e70cad156a83191a7a93",
+  "xmake_version": "3.0.8",
+  "toolchain": "msvc",
+  "upstream_toolchain": "msvc",
+  "alias_profiles": [
+    "msvc"
+  ],
+  "vs_toolset": "14.51.36231",
+  "recipe_commits": {
+    "levimc-repo": "2af594f80bb887417c85f12136c33fe5c14a1894",
+    "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+    "xmake-repo": "748a190a801cd6995600c7041f837d3b9c270035"
+  },
+  "platform": {
+    "plat": "windows",
+    "arch": "x64",
+    "mode": "release"
+  },
+  "built_at": "2026-10-11T17:57:01Z",
+  "compiled_with": "msvc",
+  "entries": {
+    "client": {
+      "plugin": "bsci",
+      "package": "bsci",
+      "version": "0.3.1",
+      "entry": "client",
+      "configs": {
+        "target_type": "client"
+      },
+      "revision": 5,
+      "upstream_commit": "b1edcd3951b18d99b5e6e70cad156a83191a7a93",
+      "xmake_version": "3.0.8",
+      "toolchain": "msvc",
+      "upstream_toolchain": "msvc",
+      "alias_profiles": [
+        "msvc"
+      ],
+      "vs_toolset": "14.51.36231",
+      "recipe_commits": {
+        "levimc-repo": "2af594f80bb887417c85f12136c33fe5c14a1894",
+        "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+        "xmake-repo": "748a190a801cd6995600c7041f837d3b9c270035"
+      },
+      "platform": {
+        "plat": "windows",
+        "arch": "x64",
+        "mode": "release"
+      },
+      "built_at": "2026-10-11T17:53:37Z",
+      "artifacts": [
+        {
+          "package": "bsci",
+          "version": "0.3.1",
+          "buildhash": "978aaa7ecfb243188b5f4cf37bc59132",
+          "key": "windows-x64-vc-978aaa7ecfb243188b5f4cf37bc59132",
+          "toolset": "14.51.36231",
+          "release": "bsci_0",
+          "asset": "bsci-978aaa7ecfb243188b5f4cf37bc59132.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/bsci_0/bsci-978aaa7ecfb243188b5f4cf37bc59132.7z",
+          "sha256": "647cc3192aee96335e7b25f56bde38f08cb6b9ec4d1c63776496a91f8a959dc0",
+          "size": 17406606,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "2c4dbf9e788e41518a9e470e8a5af56e",
+              "key": "windows-x64-vc-2c4dbf9e788e41518a9e470e8a5af56e",
+              "toolset": "14.51.36231"
+            }
+          ]
+        }
+      ],
+      "compiled_with": "msvc"
+    },
+    "server": {
+      "plugin": "bsci",
+      "package": "bsci",
+      "version": "0.3.1",
+      "entry": "server",
+      "configs": {
+        "target_type": "server"
+      },
+      "revision": 5,
+      "upstream_commit": "b1edcd3951b18d99b5e6e70cad156a83191a7a93",
+      "xmake_version": "3.0.8",
+      "toolchain": "msvc",
+      "upstream_toolchain": "msvc",
+      "alias_profiles": [
+        "msvc"
+      ],
+      "vs_toolset": "14.51.36231",
+      "recipe_commits": {
+        "levimc-repo": "2af594f80bb887417c85f12136c33fe5c14a1894",
+        "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+        "xmake-repo": "748a190a801cd6995600c7041f837d3b9c270035"
+      },
+      "platform": {
+        "plat": "windows",
+        "arch": "x64",
+        "mode": "release"
+      },
+      "built_at": "2026-10-11T17:57:01Z",
+      "artifacts": [
+        {
+          "package": "bsci",
+          "version": "0.3.1",
+          "buildhash": "ee5e6147465849a5a4be1616e21d9d5c",
+          "key": "windows-x64-vc-ee5e6147465849a5a4be1616e21d9d5c",
+          "toolset": "14.51.36231",
+          "release": "bsci_0",
+          "asset": "bsci-ee5e6147465849a5a4be1616e21d9d5c.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/bsci_0/bsci-ee5e6147465849a5a4be1616e21d9d5c.7z",
+          "sha256": "78291660a062fe5f2f7f328d4b418984cd9062ce15498bb8f00a965f44bb05c5",
+          "size": 17448321,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "0ae8e8cd26c740ef99ec3b6698c76891",
+              "key": "windows-x64-vc-0ae8e8cd26c740ef99ec3b6698c76891",
+              "toolset": "14.51.36231"
+            }
+          ]
+        }
+      ],
+      "compiled_with": "msvc"
+    }
+  }
+}

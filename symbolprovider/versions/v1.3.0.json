@@ -1,8 +1,8 @@
 {
   "package": "symbolprovider",
   "version": "v1.3.0",
-  "built_at": "2026-10-11T16:40:15Z",
-  "xmake_version": "3.1.1",
+  "built_at": "2026-10-11T17:45:26Z",
+  "xmake_version": "3.0.9",
   "toolchain": "msvc",
   "vs_toolset": "14.51.36231",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "bsci@26.32.2",
+  "produced_for": "bsci@0.4.0",
   "entries": {
     "default": {
       "package": "symbolprovider",
       "version": "v1.3.0",
-      "built_at": "2026-10-11T16:40:15Z",
-      "xmake_version": "3.1.1",
+      "built_at": "2026-10-11T17:45:26Z",
+      "xmake_version": "3.0.9",
       "toolchain": "msvc",
       "vs_toolset": "14.51.36231",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "bsci@26.32.2",
+      "produced_for": "bsci@0.4.0",
       "artifacts": [
         {
           "package": "symbolprovider",
