@@ -25,7 +25,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from . import semver, util
+from . import repos, semver, util
 
 _ADD_DEPS = re.compile(r'add_(?:deps|requires)\(\s*"([^"]+)"')
 #: A key/value row of the era dependency table, e.g.
@@ -120,6 +120,50 @@ def pick(versions, constraint: str) -> str | None:
     return semver.sort_desc(matching)[0] if matching else None
 
 
+def era_version(config: dict, ctx, package: str, cutoff: str | None) -> str | None:
+    """The newest version of ``package`` that existed at ``cutoff``.
+
+    A dependency named *without* a version resolves to the newest one there is,
+    which is right for a project of today and wrong for one of two years ago:
+    `bsci` 0.4.0 says `add_requires("levilamina")`, and the newest SDK is one whose
+    headers its sources were never compiled against -- which is how it failed
+    ("definition of implicitly declared copy constructor": a definition that the
+    SDK of its own era declared cannot be written for a class that no longer
+    declares it).
+
+    Asking the recipe repository what it looked like at the version's own date is
+    the same rollback the recipe snapshot does, applied to that one dependency:
+    the version list of a package *is* the set of its versions at that moment.
+    """
+    if not cutoff:
+        return None
+    for source in config.get("recipes", {}).get("sources", []):
+        mirror = ctx.mirror(source["name"], source["url"])
+        commit = repos.commit_at(mirror, cutoff)
+        if not commit:
+            continue
+        directory = f"packages/{package[0].lower()}/{package}"
+        listing = repos.file_at(mirror, commit, f"{directory}/versions/versions.txt")
+        versions = [line.split()[0] for line in listing.splitlines() if line.split()]
+        if not versions:
+            recipe = repos.file_at(mirror, commit, f"{directory}/xmake.lua")
+            versions = [
+                _strip_url_alias(match.group(1))
+                for match in re.finditer(r'add_versions\(\s*"([^"]+)"', recipe)
+            ]
+        if versions:
+            return semver.sort_desc(versions)[0]
+    return None
+
+
+def _strip_url_alias(version: str) -> str:
+    """``release:v1.15.5`` / ``git:v1.6.3`` pick a URL alias, not a version."""
+    _prefix, sep, rest = version.partition(":")
+    if sep and rest and "//" not in version:
+        return rest
+    return version
+
+
 def recipe_specs(recipe_dir, version: str) -> list[str]:
     """The dependencies a recipe declares for ``version``.
 
@@ -201,17 +245,32 @@ def job(config: dict, ctx, plugin, version: str, commit: str, entry: dict) -> di
         "entry": entry["id"],
         "image": toolchain_plan.get("image") or "windows-latest",
         "vs_toolset": toolchain_plan.get("vs_toolset") or "",
+        # A plugin that knows better says so (the era's own compiler, and whether
+        # the image needs LLVM 22 installed on top of it); the safe answer for
+        # anything else is to install it, which is what the rounds always did.
+        "llvm": bool(toolchain_plan.get("llvm", True)),
         "commit": commit,
     }
 
 
-def split(config: dict, ctx, plugins_list, jobs: list[dict], built) -> tuple[list[dict], list[dict], list[str]]:
-    """``(runs first, waits for that stage, notes)`` for the queued jobs.
+def split(config: dict, ctx, plugins_list, jobs: list[dict], built):
+    """``(free to run, what a dependent waits for, the dependents, notes)``.
 
     A job that resolves an owned package -- one a plugin of ours publishes, which
     is how LeviLamina reaches its plugins -- whose artifact is *not* in the ledger
-    yet is put in the second stage, and the dependency's own build is put in the
-    first one (deduplicated: one job per plugin version, whoever asked for it).
+    yet has to wait for that package's own build, which is queued here
+    (deduplicated: one build per plugin version, whoever asked for it).
+
+    The two groups are kept apart because only the dependents need the second one:
+    the rest of the round -- the ordinary backlog -- runs at the same time as it,
+    so a plugin is not delayed by whichever versions happen to be queued next.
+    A job the round would have run anyway lands in the second group as soon as a
+    dependent needs that very version, since the dependents read the results of
+    the builds they wait for.
+
+    An added build is itself planned for nothing: a dependency of a dependency
+    would need a stage per hop, and the dependent compiles what nobody published
+    instead -- which is what it always did.
     """
     by_package = {}
     for plugin in plugins_list:
@@ -222,18 +281,19 @@ def split(config: dict, ctx, plugins_list, jobs: list[dict], built) -> tuple[lis
 
     by_name = {plugin.name: plugin for plugin in plugins_list}
     queued = {(item["plugin"], item["version"]) for item in jobs}
-    first: list[dict] = []
-    second: list[dict] = []
     added: list[dict] = []
+    needed: set[tuple[str, str]] = set()
+    waits: dict[tuple[str, str], set[str]] = {}
     notes: list[str] = []
     for item in jobs:
         plugin = by_name.get(item["plugin"])
-        waiting: set[str] = set()
+        waits_for: set[str] = set()
         if plugin is not None:
             specs = dependency_specs(
                 plugin, ctx, item["version"], item["commit"],
                 plugin.call("recipe_dir", ctx, item["version"], item["commit"]),
             )
+            cutoff = plugin.call("recipe_cutoff", ctx, item["version"], item["commit"])
             # A dependency can be declared twice with different versions (the
             # recipe's own table, and the project file's `add_requires`), and xmake
             # settles on the newest of them -- so plan that one, and say so.
@@ -243,7 +303,7 @@ def split(config: dict, ctx, plugins_list, jobs: list[dict], built) -> tuple[lis
                 owner = by_package.get(name)
                 if owner is None or owner.name == plugin.name:
                     continue
-                version = _owned_version(owner, ctx, spec)
+                version = _owned_version(config, ctx, owner, spec, cutoff)
                 if not version:
                     notes.append(f"{name}: cannot resolve the version of {spec!r}")
                     continue
@@ -265,25 +325,55 @@ def split(config: dict, ctx, plugins_list, jobs: list[dict], built) -> tuple[lis
                         continue
                     queued.add((owner.name, version))
                     added += found
-                waiting.add(f"{name}@{version}")
-        if waiting:
-            second.append(dict(item, waits_for=sorted(waiting)))
-        else:
-            first.append(item)
-    # The dependency's own build goes ahead of the dependents; it is not planned
-    # for its own dependencies, because the workflow has two stages and a chain
-    # would need a third (the dependent then compiles it, as it always did).
-    return first + added, second, notes
+                needed.add((owner.name, version))
+                waits_for.add(f"{name}@{version}")
+        if waits_for:
+            waits[(item["plugin"], item["version"])] = waits_for
+    for key in sorted(waits):
+        if key in needed:
+            # Something else waits for *this* build, and a job cannot both wait
+            # for its own dependency and be one.
+            notes.append(f"{key[0]} {key[1]}: it is a dependency of another job, so it builds")
+    dependencies = [
+        item
+        for item in list(jobs) + added
+        if (item["plugin"], item["version"]) in needed
+    ]
+    waiting = [
+        dict(item, waits_for=sorted(waits[(item["plugin"], item["version"])]))
+        for item in jobs
+        if (item["plugin"], item["version"]) in waits
+        and (item["plugin"], item["version"]) not in needed
+    ]
+    first = [
+        item for item in jobs if (item["plugin"], item["version"]) not in needed | set(waits)
+    ]
+    return first, dependencies, waiting, notes
 
 
-def _owned_version(owner, ctx, spec: str) -> str | None:
-    """The version of ``spec`` the owner recipe would resolve to."""
-    entries = owner.call("list_versions", ctx) or []
-    available = [item["version"] for item in entries]
+def _owned_version(config: dict, ctx, owner, spec: str, cutoff: str | None) -> str | None:
+    """The version of ``spec`` the owner recipe would resolve to.
+
+    A spec that names no version is the interesting one: today's newest is not
+    what the project was built against, so the era decides (see era_version).
+    """
     constraint = spec_version(spec)
-    if not constraint:
-        return semver.sort_desc(available)[0] if available else None
-    return pick(available, constraint)
+    if constraint:
+        available = [item["version"] for item in owner.call("list_versions", ctx) or []]
+        found = pick(available, constraint)
+        if found:
+            return found
+        # Nothing today satisfies it: the package's own era may still hold the
+        # version the project was built with, which is what it means.
+        package = (owner.call("metadata") or {}).get("package") or ""
+        era = era_version(config, ctx, package, cutoff) if package else None
+        return era if era and satisfies(era, constraint) else None
+    package = (owner.call("metadata") or {}).get("package") or ""
+    era = era_version(config, ctx, package, cutoff) if package else None
+    if era:
+        return era
+    available = [item["version"] for item in owner.call("list_versions", ctx) or []]
+    return semver.sort_desc(available)[0] if available else None
 
 
 def _owner_jobs(config: dict, ctx, owner, version: str) -> list[dict]:

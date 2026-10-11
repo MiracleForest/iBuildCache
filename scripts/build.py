@@ -73,16 +73,15 @@ def build_once(config, ctx, plugin, args, *, plat, arch, toolchain, vs_toolset,
         # recipe lookup for a package has to follow the same order.
         repo_order = local_repos + [("xmake-repo", main_repo)]
         requires = [f'add_requires("{require}", {{configs = {_lua_table(configs)}}})']
+        extra = plan.extra_deps(
+            plugin, ctx, args.version, commit, _own_recipe_dir(prepared, own)
+        )
         # The project's own file may name a dependency its recipe already pins to
         # another version; asking for both would build a second SDK nobody uses.
-        requires += extra_requires(
-            ctx,
-            repo_order,
-            plan.extra_deps(
-                plugin, ctx, args.version, commit,
-                _own_recipe_dir(prepared, own),
-            ),
-        )
+        # Not `sources`: that is the module this loop already uses.
+        declared_sources = {name: Path(directory) for name, directory in repo_order}
+        pins = dependency_pins(config, ctx, declared_sources, extra, cutoff=recipe_cutoff)
+        requires += extra_requires(config, ctx, repo_order, extra, pinned=pins)
         suffix = "" if use_today else "-era"
         sandbox = xmake_env.create_sandbox(
             config,
@@ -96,6 +95,16 @@ def build_once(config, ctx, plugin, args, *, plat, arch, toolchain, vs_toolset,
             extra_lua="\n".join(requires),
         )
         git_shim.install(config, sandbox.env, git_cutoff)
+        if pins:
+            # The project's own build runs a fresh xmake of its own; the versions
+            # travel to it through the recipe (see plugins/upstream.py).
+            sandbox.env["BUILDCACHE_PINS"] = ",".join(
+                f"{name}={version}" for name, version in sorted(pins.items())
+            )
+            util.log(
+                "pinned for the project's own build: "
+                + ", ".join(f"{name}={version}" for name, version in sorted(pins.items()))
+            )
 
         # Some steps are known to be flaky (generating the bedrock runtime data can
         # fail and succeed on the next attempt), so both install steps are retried
@@ -273,8 +282,13 @@ def main() -> int:
 
     entries = plugin.call("list_versions", ctx) or []
     entry = next((item for item in entries if item["version"] == args.version), None)
-    if entry is None:
+    if entry is None and not args.commit:
         util.die(f"version {args.version} is not tracked by the recipe repository")
+    if entry is None:
+        # With the commit given, a version the plugin keeps out of its *queue* can
+        # still be built -- which is how a probe asks "would this one work now?"
+        # about something the rounds skip on purpose.
+        entry = {"version": args.version, "commit": args.commit}
     commit = args.commit or entry["commit"]
 
     util.log_step(f"{plugin.name} {args.version} ({commit[:12]})")
@@ -512,7 +526,39 @@ def publish(config, args, ctx, sandbox, plat, arch, toolchain, vs_toolset, xmake
     }
 
 
-def extra_requires(ctx, repos, extra: list[dict]) -> list[str]:
+def dependency_pins(
+    config: dict, ctx, sources: dict[str, Path], extra: list[dict], *, cutoff: str | None
+) -> dict[str, str]:
+    """The version to use for each SDK the project's own file leaves open.
+
+    A require *without* a version resolves to the newest SDK there is, and one the
+    recipe has since dropped has no answer at all: for a package we publish, the
+    version of the project's own era is what its sources were written against (see
+    ``plan.era_version``). ``bsci`` 0.4.0 asks for ``levilamina`` and was then
+    compiled against 26.51.6; its era's own newest is 26.20.0.
+
+    This decides the version twice -- for our sandbox's top-level require, and for
+    the project's own build, which resolves it again in a fresh xmake of its own
+    (the same map is handed to that build through the recipe, see
+    ``plugins/upstream.py``).
+    """
+    owned = {name.lower() for name in plugins.project_packages(config, ctx)}
+    pins: dict[str, str] = {}
+    for item in extra:
+        name = str(item.get("name") or "")
+        if not name or name.lower() not in owned:
+            continue
+        if _declared_version(sources, name, item.get("version", "")) not in ("", None):
+            continue
+        version = plan.era_version(config, ctx, name, cutoff)
+        if version:
+            pins[name] = version
+    return pins
+
+
+def extra_requires(
+    config: dict, ctx, repos, extra: list[dict], *, pinned: dict[str, str] | None = None
+) -> list[str]:
     """``add_requires`` lines for the dependencies only the project file names.
 
     A consumer resolving the project gets them (they are named by the project's
@@ -522,24 +568,42 @@ def extra_requires(ctx, repos, extra: list[dict]) -> list[str]:
     the project) because that is what makes ``require --export`` export them.
 
     ``repos`` is in xmake's search order, the same one the recipe lookup uses.
+
+    A dependency the project names *without* a version would resolve to today's
+    newest, which is not what a project of its age was ever built against: for the
+    packages we publish ourselves, the version is taken from the recipe as it was
+    at the version's own date instead (see ``plan.era_version``).
     """
     if not extra:
         return []
     sources = {name: Path(directory) for name, directory in repos}
+    pinned = pinned or {}
     lines = []
     for item in extra:
         version = _declared_version(sources, item["name"], item.get("version", ""))
+        if version is None:
+            # The recipe dropped that version: the package's own era is the only
+            # answer that is not a guess (see dependency_pins).
+            version = pinned.get(item["name"])
+            if version is None:
+                continue
+        elif not version:
+            version = pinned.get(item["name"], "")
         spec = f'{item["name"]} {version}'.strip()
         lines.append(f'add_requires("{spec}")')
     return lines
 
 
-def _declared_version(sources: dict[str, Path], name: str, wanted: str) -> str:
-    """The version to ask for, or "" to let xmake pick the newest.
+def _declared_version(sources: dict[str, Path], name: str, wanted: str) -> str | None:
+    """The version to ask for, "" to let xmake choose, or ``None`` to ask for nothing.
 
     A version the recipe spells with a leading ``v`` is asked for that way, and a
-    range (``~1.6.2``) is left to xmake. A version the recipe no longer declares is
-    not asked for at all: xmake resolves the newest one instead.
+    range (``~1.6.2``) is left to xmake. A version the recipe no longer declares
+    means *nothing* is asked for -- deliberately not the newest one: a project
+    pinning an SDK that old is written against its own, and swapping in a current
+    SDK compiles it against something it was never built for. It then fails
+    somewhere further along, or, worse, succeeds and produces an artifact that
+    links a version its own sources never saw.
     """
     if not wanted:
         return ""
@@ -550,8 +614,11 @@ def _declared_version(sources: dict[str, Path], name: str, wanted: str) -> str:
         return wanted
     if f"v{wanted}" in available:
         return f"v{wanted}"
-    util.warn(f"recipe for '{name}' has no version {wanted}; using the newest available")
-    return ""
+    util.warn(
+        f"recipe for '{name}' no longer declares {wanted}; the project's own pin is "
+        f"dropped rather than replaced by a newer SDK"
+    )
+    return None
 
 
 def _find_recipe_dir(sources: dict[str, Path], name: str) -> Path | None:
@@ -652,31 +719,27 @@ def cached_artifact(
 
 
 def _retry_failed_packages(config: dict, sandbox, attempts: int) -> None:
-    """Rebuild the packages that failed, one by one, before retrying the whole step."""
+    """Report what failed before the step is retried as a whole.
+
+    It used to rebuild every failed package on its own (``xmake require --build
+    <name> <version>``), which looks cheaper and is not: with a spec on the command
+    line xmake resolves a git source by *tag* instead of the commit the recipe
+    pins, so for a package whose tags are named differently ("v0.13.0" upstream,
+    "0.13.0" in the recipe) every one of those retries died in a clone -- hiding the
+    error that actually failed the build, which is the whole point of retrying.
+    The step itself is retried next, and xmake skips what is already installed, so
+    that retry only rebuilds what failed.
+    """
     failed = xmake_env.failed_packages(sandbox)
     if not failed:
         return
     util.log(
-        f"retrying {len(failed)} failed package(s) on their own: "
+        f"{len(failed)} package(s) failed, retrying the step: "
         + ", ".join(f"{name} {version}" for name, version in failed)
     )
-    for name, version in failed:
-        for attempt in range(1, attempts + 1):
-            # Say what is being retried and how it went: a silent retry loop is
-            # indistinguishable from a hang in the log.
-            util.log(f"== retry {name} {version} (attempt {attempt}/{attempts})")
-            single = sandbox.xmake(
-                ["require", "-y", "--build", f"{name} {version}"],
-                stream=True,
-                check=False,
-            )
-            if single.returncode == 0:
-                util.log(f"== retry {name} {version} ok")
-                break
-            util.warn(f"{name} {version} failed (attempt {attempt}/{attempts})")
-            # The reason is in the package's own install log, which lives inside
-            # the sandbox: print it per failed attempt, not only at the end.
-            xmake_env.dump_failed_logs(config, sandbox)
+    # The reason is in the package's own install log, which lives inside the
+    # sandbox: print it per attempt, not only at the end.
+    xmake_env.dump_failed_logs(config, sandbox)
 
 
 def _publish_one(config, ctx, sandbox, dist, owner, repo, max_assets, plugin,

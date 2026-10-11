@@ -381,10 +381,13 @@ def test_an_sdk_the_ledger_lacks_is_built_ahead_of_its_plugins():
     md = _dependent("moredimensions", "0.13.0", "bbb")
     jobs = [plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"})]
 
-    first, waiting, notes = plan.split({}, None, [ll, md], jobs, lambda package, version: False)
+    first, dependencies, waiting, notes = plan.split(
+        {}, None, [ll, md], jobs, lambda package, version: False
+    )
 
     assert notes == []
-    assert [(item["plugin"], item["version"], item["entry"]) for item in first] == [
+    assert first == []
+    assert [(item["plugin"], item["version"], item["entry"]) for item in dependencies] == [
         ("ll", "1.9.9", "server"),
         ("ll", "1.9.9", "client"),
     ]
@@ -397,11 +400,12 @@ def test_a_published_sdk_is_reused_and_nothing_waits():
     md = _dependent("moredimensions", "0.13.0", "bbb")
     jobs = [plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"})]
 
-    first, waiting, notes = plan.split(
+    first, dependencies, waiting, notes = plan.split(
         {}, None, [ll, md], jobs, lambda package, version: package == "levilamina"
     )
 
     assert notes == []
+    assert dependencies == []
     assert waiting == []
     assert [(item["plugin"], item["version"]) for item in first] == [("moredimensions", "0.13.0")]
 
@@ -415,13 +419,42 @@ def test_two_dependents_share_one_sdk_build():
         plan.job({}, None, two, "0.13.0", "ddd", {"id": "default"}),
     ]
 
-    first, waiting, _notes = plan.split({}, None, [ll, one, two], jobs, lambda p, v: False)
+    first, dependencies, waiting, _notes = plan.split(
+        {}, None, [ll, one, two], jobs, lambda p, v: False
+    )
 
-    assert [(item["plugin"], item["version"]) for item in first] == [
+    assert first == []
+    assert [(item["plugin"], item["version"]) for item in dependencies] == [
         ("ll", "1.9.9"),
         ("ll", "1.9.9"),
     ]
     assert len(waiting) == 2
+
+
+def test_a_build_a_dependent_waits_for_is_not_run_beside_it():
+    """The plugin's own queue can pick the very version a dependent needs.
+
+    That build then has to move out of the free-running group: the dependents read
+    the results of the builds they wait for, so a job running *beside* them would
+    leave them without the artifact they asked for -- and they would compile it
+    themselves, which is the whole thing being avoided.
+    """
+    ll = _levilamina_plugin()
+    md = _dependent("moredimensions", "0.13.0", "bbb")
+    jobs = [
+        plan.job({}, None, ll, "1.9.9", "aaa", {"id": "server"}),
+        plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"}),
+    ]
+
+    first, dependencies, waiting, _notes = plan.split(
+        {}, None, [ll, md], jobs, lambda package, version: False
+    )
+
+    assert first == []
+    assert [(item["plugin"], item["version"], item["entry"]) for item in dependencies] == [
+        ("ll", "1.9.9", "server")
+    ]
+    assert len(waiting) == 1
 
 
 def test_a_dependency_that_cannot_be_resolved_does_not_block_anything():
@@ -436,11 +469,139 @@ def test_a_dependency_that_cannot_be_resolved_does_not_block_anything():
     )
     jobs = [plan.job({}, None, md, "0.13.0", "bbb", {"id": "default"})]
 
-    first, waiting, notes = plan.split({}, None, [ll, md], jobs, lambda package, version: False)
+    first, dependencies, waiting, notes = plan.split(
+        {}, None, [ll, md], jobs, lambda package, version: False
+    )
 
     assert waiting == []
+    assert dependencies == []
     assert [item["plugin"] for item in first] == ["moredimensions"]
     assert notes and "cannot resolve" in notes[0]
+
+
+def test_only_the_eras_that_build_with_llvm_22_download_it():
+    """LeviLamina moved to LLVM 22 in August 2026, first released with 26.32.0.
+
+    The compiler of an era is part of what the era *is*: 26.32.0 and later need
+    LLVM 22 installed on top of the image, everything before them is built by the
+    compiler the image already carries. A plugin that does not say gets the safe
+    answer (install it), which is what every round did before this existed.
+    """
+    ll = next(item for item in plugins.load_all(util.load_config()) if item.name == "ll")
+    assert ll.module.needs_llvm22("26.51.6")
+    assert ll.module.needs_llvm22("26.32.0")
+    assert not ll.module.needs_llvm22("26.20.7")
+    assert not ll.module.needs_llvm22("1.9.9")
+    # a branch is not a version: the newest rules apply
+    assert ll.module.needs_llvm22("main")
+
+    silent = _FakePlugin(
+        "x", "x", versions=[{"version": "1.0.0", "commit": "a"}],
+        entries=[{"id": "default", "configs": {}}],
+    )
+    assert plan.job({}, None, silent, "1.0.0", "a", {"id": "default"})["llvm"] is True
+
+
+def test_the_git_shim_retries_a_ref_upstream_spells_another_way():
+    """A recipe may name `0.4.0` where upstream tags it `v0.4.0`.
+
+    xmake then asks git for a ref that does not exist and the clone dies before
+    anything is built -- the era plan meets this, because the recipe as it was on
+    that date had not pinned the commit yet, and nothing in the log says so. The
+    shim tries the "v", and then clones without a ref at all, which its own pin()
+    rewinds to the cutoff.
+    """
+    from lib import git_shim_impl as shim
+
+    argv = ["clone", "https://x/y.git", "-b", "0.4.0", "--depth", "1", "dir"]
+    assert shim.with_v(argv) == ["clone", "https://x/y.git", "-b", "v0.4.0", "--depth", "1", "dir"]
+    assert shim.without_ref(argv) == ["clone", "https://x/y.git", "--depth", "1", "dir"]
+    # a long form, and a clone that names no ref at all
+    assert shim.with_v(["clone", "--branch=1.2.3", "u"]) == ["clone", "--branch=v1.2.3", "u"]
+    plain = ["clone", "https://x/y.git", "dir"]
+    assert shim.with_v(plain) == plain
+    assert shim.without_ref(plain) == plain
+    assert shim.clone_target(["u.git", "dir"]) == "dir"
+
+
+def test_a_dependency_without_a_version_takes_the_one_of_its_era(monkeypatch, tmp_path: Path):
+    """`bsci` 0.4.0 says `add_requires("levilamina")` -- no version at all.
+
+    Resolved against today's recipes that is the newest SDK there is (26.51.6 at
+    the time), whose headers its sources were never compiled against; resolved
+    against the recipes *as they were on the day it was released*, it is 26.20.0,
+    which is what it was built with. The rollback the recipe snapshot does for the
+    project is applied to that one dependency.
+    """
+    mirror = tmp_path / "levimc-repo"
+    recipe = mirror / "packages" / "l" / "levilamina"
+    (recipe / "versions").mkdir(parents=True)
+    (recipe / "versions" / "versions.txt").write_text(
+        "1.9.9 aaa\n26.20.0 bbb\n26.51.6 ccc\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(plan.repos, "commit_at", lambda directory, cutoff=None, **kw: "era")
+    monkeypatch.setattr(
+        plan.repos,
+        "file_at",
+        lambda directory, commit, path, **kw: util.read_text(Path(directory) / path),
+    )
+    config = {"recipes": {"sources": [{"name": "levimc-repo", "url": "x"}]}}
+    ctx = type("Ctx", (), {"mirror": staticmethod(lambda name, url: mirror)})()
+
+    # the file *is* the set of versions at that moment, so the newest in it is the
+    # newest of that era
+    assert plan.era_version(config, ctx, "levilamina", "2026-07-10T00:00:00Z") == "26.51.6"
+    # a build with no cutoff has no era to look up
+    assert plan.era_version(config, ctx, "levilamina", "") is None
+
+
+def test_a_version_only_one_plugin_tracks_does_not_stop_the_round(monkeypatch, tmp_path: Path):
+    """`-f version=X` is routinely meant for one plugin out of several.
+
+    The input pins the round to that version; plugins that have no such version are
+    simply not part of it. Failing the whole discovery instead meant a version was
+    only usable together with `-f plugin=`, so "this SDK version, whichever plugin
+    owns it" could not be said at all.
+    """
+    import pytest
+
+    ll = _FakePlugin(
+        "ll",
+        "levilamina",
+        versions=[{"version": "26.20.7", "commit": "aaa"}],
+        entries=[{"id": "server", "configs": {}}],
+    )
+    md = _FakePlugin(
+        "moredimensions",
+        "more-dimensions",
+        versions=[{"version": "0.14.1", "commit": "bbb"}],
+        entries=[{"id": "default", "configs": {}}],
+    )
+    monkeypatch.setattr(discover.plugins, "load_all", lambda config: [ll, md])
+    monkeypatch.setattr(
+        discover.plugins.Context, "ensure_index", lambda self, create=False: self.index_root
+    )
+    monkeypatch.setattr(
+        discover.util,
+        "load_config",
+        lambda: {"repos": {}, "revision": 1, "batch": {}, "_index_dir": str(tmp_path / "index")},
+    )
+    out = tmp_path / "matrix.json"
+    monkeypatch.setattr(
+        discover.sys, "argv", ["discover.py", "--version", "26.20.7", "--out", str(out)]
+    )
+
+    assert discover.main() == 0
+    assert [(item["plugin"], item["version"]) for item in util.read_json(out, [])] == [
+        ("ll", "26.20.7")
+    ]
+
+    # a version nobody tracks is still an error worth reporting
+    monkeypatch.setattr(
+        discover.sys, "argv", ["discover.py", "--version", "9.9.9", "--out", str(out)]
+    )
+    with pytest.raises(SystemExit):
+        discover.main()
 
 
 def test_the_revision_gate_decides_whether_a_dependency_can_be_reused(tmp_path: Path):
@@ -452,6 +613,10 @@ def test_the_revision_gate_decides_whether_a_dependency_can_be_reused(tmp_path: 
     # built by an older revision: a build is not offered it, so it cannot reuse it
     assert not index_store.has_artifacts(index_root, "levilamina", "1.9.9", 5)
     assert not index_store.has_artifacts(index_root, "levilamina", "1.9.8", 4)
+    # the same question for a whole package, which is what tells one release line
+    # from another
+    assert index_store.versions_with_artifacts(index_root, "levilamina", 4) == {"1.9.9"}
+    assert index_store.versions_with_artifacts(index_root, "levilamina", 5) == set()
 
 
 def test_a_job_reuses_what_the_round_just_published(tmp_path: Path):
@@ -1135,6 +1300,82 @@ def test_every_release_line_gets_a_build_before_any_gets_two():
     assert discover.cover_lines_first(pending) == ordered
 
 
+def test_a_line_the_ledger_already_covers_comes_last():
+    """`discover` takes the first two, so the order has to move down the lines.
+
+    With 26.51 (26.51.4, 26.51.6) and 26.40 (26.40.3) already built, a round that
+    re-represented those lines would pick 26.51.x and 26.40.x again -- and the
+    round after that, and every round after, so 26.32, 26.20, ... and 1.9 would
+    never be reached. A line the ledger has nothing for comes first instead.
+    """
+    pending = [
+        "26.51.6", "26.51.4", "26.40.6", "26.40.3", "26.32.2", "26.32.0", "26.20.7",
+    ]
+    assert discover.cover_lines_first(pending)[:2] == ["26.51.6", "26.40.6"]
+    covered = {"26.51.6", "26.51.4", "26.40.3"}
+    assert discover.cover_lines_first(pending, covered)[:2] == ["26.32.2", "26.20.7"]
+    # and once those are built, the next lines follow
+    assert discover.cover_lines_first(pending, covered | {"26.32.2"})[:1] == ["26.20.7"]
+
+
+def test_a_version_the_recipe_dropped_is_not_swapped_for_a_newer_sdk(tmp_path: Path):
+    """A project pinning an SDK that old is written against its own era.
+
+    `bsci` 0.4.0 names a LeviLamina its recipe no longer declares; asking for "the
+    newest" instead is how it ended up compiled against 26.51.6, whose headers its
+    sources never saw. Nothing extra is asked for then, so the failure is the
+    project's own and happens where it means something.
+    """
+    recipe = tmp_path / "packages" / "l" / "levilamina"
+    recipe.mkdir(parents=True)
+    (recipe / "xmake.lua").write_text(
+        'package("levilamina")\n    add_versions("1.9.9", "abc")\n', encoding="utf-8"
+    )
+    sources = {"levimc-repo": tmp_path}
+
+    assert build._declared_version(sources, "levilamina", "1.9.9") == "1.9.9"
+    # a range is left to xmake
+    assert build._declared_version(sources, "levilamina", ">=1.9.2 <1.10.0") == ">=1.9.2 <1.10.0"
+    # nothing to ask for, and deliberately not the newest either
+    assert build._declared_version(sources, "levilamina", "1.9.4") is None
+    assert build._declared_version(sources, "unknown-package", "1.0.0") is None
+
+
+def test_versions_a_project_gives_up_on_are_not_queued():
+    """`bsci` 0.1.x-0.4.0 do not compile with a current compiler at all.
+
+    Their own sources fail (clang rejects a copy constructor defined after the
+    implicit one is used), whatever SDK they link. Queued, they would take a job
+    every round and fail it, so the project declares them out of its version list.
+    """
+    def config_plugin(**settings):
+        config = {
+            "plugins": [
+                {
+                    "name": "bsci",
+                    "module": "plugins/upstream.py",
+                    "settings": dict(recipe_package="bsci", **settings),
+                }
+            ]
+        }
+        return plugins.load_all(config)[0].module
+
+    plugin = config_plugin(skipBelow="1.0.0")
+    found = plugin._kept(
+        [
+            {"version": "26.32.2", "commit": "a"},
+            {"version": "0.4.0", "commit": "b"},
+            {"version": "1.0.0", "commit": "c"},
+        ]
+    )
+    assert [item["version"] for item in found] == ["26.32.2", "1.0.0"]
+    named = config_plugin(skipVersions=["26.32.2"])
+    assert [item["version"] for item in named._kept([{"version": "26.32.2"}])] == []
+    # nothing declared, nothing filtered
+    plain = config_plugin()
+    assert plain._kept([{"version": "0.4.0"}]) == [{"version": "0.4.0"}]
+
+
 def test_the_extra_closure_is_built_not_only_declared(tmp_path: Path):
     """Deps that only the project's own xmake.lua names are part of the closure.
 
@@ -1143,7 +1384,8 @@ def test_the_extra_closure_is_built_not_only_declared(tmp_path: Path):
     own dependency list. They are asked for at the top level here, which is what
     makes ``require --export`` include them.
     """
-    ctx = plugins.Context(dict(util.load_config()))
+    config = dict(util.load_config())
+    ctx = plugins.Context(config)
     repo = tmp_path / "levimc-repo@test"
     for name, versions in {"cpr": ["1.11.1"], "libhat": ["v0.4.0"], "trampoline": ["2024.11.7"]}.items():
         recipe = repo / "packages" / name[0] / name
@@ -1154,6 +1396,7 @@ def test_the_extra_closure_is_built_not_only_declared(tmp_path: Path):
         )
 
     lines = build.extra_requires(
+        config,
         ctx,
         [("levimc-repo", repo)],
         [
@@ -1170,7 +1413,7 @@ def test_the_extra_closure_is_built_not_only_declared(tmp_path: Path):
         'add_requires("trampoline")',
     ]
     # a project with no such dependencies adds nothing
-    assert build.extra_requires(ctx, [("levimc-repo", repo)], []) == []
+    assert build.extra_requires(config, ctx, [("levimc-repo", repo)], []) == []
 
 
 def test_copy_only_dependencies_are_not_cached(tmp_path: Path):
@@ -1363,7 +1606,14 @@ def test_a_declared_recipe_edit_repairs_what_xmake_cannot_import(tmp_path: Path)
     )
 
     notes = plugin.module.repair_recipes(config, "levimc-repo", snapshot)
-    assert len(notes) == 1, notes
+    # the recipe gets the edit, and the block that pins what the project leaves open
+    assert len(notes) == 2, notes
+    assert "pins the SDK versions it leaves open" in notes[0], notes
+    assert "package.tools.xmake" in util.read_text(recipe)
+    assert "BUILDCACHE_PINS" in util.read_text(recipe)
+    # idempotent: the pin block is not injected twice
+    assert plugin.module.repair_recipes(config, "levimc-repo", snapshot) == []
+    assert util.read_text(recipe).count("BUILDCACHE_PINS") == 1
     assert 'import("package.tools.xmake")' in util.read_text(recipe)
     # a source that does not carry this project's recipe is left alone, and the
     # repair is idempotent: a second pass has nothing left to replace
