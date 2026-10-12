@@ -1,8 +1,8 @@
 {
   "package": "preloader",
   "version": "v1.12.0",
-  "built_at": "2026-10-11T21:26:36Z",
-  "xmake_version": "2.9.7",
+  "built_at": "2026-10-12T01:08:42Z",
+  "xmake_version": "2.9.8",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.0.0",
+  "produced_for": "levilamina@1.1.0-rc.1",
   "entries": {
     "default": {
       "package": "preloader",
       "version": "v1.12.0",
-      "built_at": "2026-10-11T21:26:36Z",
-      "xmake_version": "2.9.7",
+      "built_at": "2026-10-12T01:08:42Z",
+      "xmake_version": "2.9.8",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.0.0",
+      "produced_for": "levilamina@1.1.0-rc.1",
       "artifacts": [
         {
           "package": "preloader",
@@ -41,8 +41,8 @@
           "release": "preloader_0",
           "asset": "preloader-6e82d9d90b7e46009dd769e52e759e1d.7z",
           "url": "https://github.com/MiracleForest/iBuildCache/releases/download/preloader_0/preloader-6e82d9d90b7e46009dd769e52e759e1d.7z",
-          "sha256": "125c3a8763ea24c636ebbea137a3cd54b4f9d2539f9983e5a80cdfc78cc4e9b3",
-          "size": 213862,
+          "sha256": "c6fe9c785dd44eb7c2dad72b7a28e8ba5cfb7d01d4b5666105282d9cdb99b6aa",
+          "size": 213917,
           "container": "7z",
           "aliases": [
             {

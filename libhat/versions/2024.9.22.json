@@ -1,8 +1,8 @@
 {
   "package": "libhat",
   "version": "2024.9.22",
-  "built_at": "2026-10-11T21:26:36Z",
-  "xmake_version": "2.9.7",
+  "built_at": "2026-10-12T01:08:42Z",
+  "xmake_version": "2.9.8",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.0.0",
+  "produced_for": "levilamina@1.1.0-rc.1",
   "entries": {
     "default": {
       "package": "libhat",
       "version": "2024.9.22",
-      "built_at": "2026-10-11T21:26:36Z",
-      "xmake_version": "2.9.7",
+      "built_at": "2026-10-12T01:08:42Z",
+      "xmake_version": "2.9.8",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.0.0",
+      "produced_for": "levilamina@1.1.0-rc.1",
       "artifacts": [
         {
           "package": "libhat",
@@ -41,8 +41,8 @@
           "release": "libhat_0",
           "asset": "libhat-bfc5ac80a2ba46b3890d7852b6bb022e.7z",
           "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libhat_0/libhat-bfc5ac80a2ba46b3890d7852b6bb022e.7z",
-          "sha256": "f5b56c3353c7bcd1fbd024fb6521998ff86049fb2fcb615bea62251ff9200afb",
-          "size": 43475,
+          "sha256": "912b41a5f68cbc55d09b9e68da0426748a956125d907b0cd27450e54bb45ad02",
+          "size": 43530,
           "container": "7z",
           "aliases": [
             {
