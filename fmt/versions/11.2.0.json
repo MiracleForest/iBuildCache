@@ -1,7 +1,7 @@
 {
   "package": "fmt",
   "version": "11.2.0",
-  "built_at": "2026-10-12T14:39:14Z",
+  "built_at": "2026-10-12T19:39:43Z",
   "xmake_version": "3.1.1",
   "toolchain": "msvc",
   "vs_toolset": "14.51.36231",
@@ -14,12 +14,12 @@
     "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@26.51.7",
+  "produced_for": "levilamina@26.51.1",
   "entries": {
     "default": {
       "package": "fmt",
       "version": "11.2.0",
-      "built_at": "2026-10-12T14:39:14Z",
+      "built_at": "2026-10-12T19:39:43Z",
       "xmake_version": "3.1.1",
       "toolchain": "msvc",
       "vs_toolset": "14.51.36231",
@@ -32,7 +32,7 @@
         "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@26.51.7",
+      "produced_for": "levilamina@26.51.1",
       "artifacts": [
         {
           "package": "fmt",

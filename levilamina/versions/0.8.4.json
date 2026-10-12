@@ -1,0 +1,86 @@
+{
+  "plugin": "ll",
+  "package": "levilamina",
+  "version": "0.8.4",
+  "entry": "server",
+  "configs": {
+    "target_type": "server"
+  },
+  "revision": 5,
+  "upstream_commit": "00e0c9086d7168ba83a430fcf11c29bdaa186350",
+  "xmake_version": "2.8.6",
+  "toolchain": "msvc",
+  "upstream_toolchain": "msvc",
+  "alias_profiles": [
+    "msvc"
+  ],
+  "vs_toolset": "14.44.35207",
+  "recipe_commits": {
+    "levimc-repo": "169ac5a8499018dc19d003dea8c34b0076cd8b2c",
+    "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+    "xmake-repo": "bc08be2e44020aa28c793ea125eef86a8f21ed31"
+  },
+  "platform": {
+    "plat": "windows",
+    "arch": "x64",
+    "mode": "release"
+  },
+  "built_at": "2026-10-12T19:35:46Z",
+  "compiled_with": "msvc",
+  "entries": {
+    "server": {
+      "plugin": "ll",
+      "package": "levilamina",
+      "version": "0.8.4",
+      "entry": "server",
+      "configs": {
+        "target_type": "server"
+      },
+      "revision": 5,
+      "upstream_commit": "00e0c9086d7168ba83a430fcf11c29bdaa186350",
+      "xmake_version": "2.8.6",
+      "toolchain": "msvc",
+      "upstream_toolchain": "msvc",
+      "alias_profiles": [
+        "msvc"
+      ],
+      "vs_toolset": "14.44.35207",
+      "recipe_commits": {
+        "levimc-repo": "169ac5a8499018dc19d003dea8c34b0076cd8b2c",
+        "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+        "xmake-repo": "bc08be2e44020aa28c793ea125eef86a8f21ed31"
+      },
+      "platform": {
+        "plat": "windows",
+        "arch": "x64",
+        "mode": "release"
+      },
+      "built_at": "2026-10-12T19:35:46Z",
+      "artifacts": [
+        {
+          "package": "levilamina",
+          "version": "0.8.4",
+          "buildhash": "2c6fa11a4a2a41dc8c32ad8a272680db",
+          "key": "windows-x64-vc-2c6fa11a4a2a41dc8c32ad8a272680db",
+          "toolset": "14.44.35207",
+          "release": "levilamina_0",
+          "asset": "levilamina-2c6fa11a4a2a41dc8c32ad8a272680db.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/levilamina_0/levilamina-2c6fa11a4a2a41dc8c32ad8a272680db.7z",
+          "sha256": "25d4fe2f71be1889988288a0120cfa869aa2d150782acaab2a2c9bbc8de5b161",
+          "size": 5532629,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "2d676972b37643238f0f02a660e805ca",
+              "key": "windows-x64-vc-2d676972b37643238f0f02a660e805ca",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ],
+      "compiled_with": "msvc"
+    }
+  }
+}
