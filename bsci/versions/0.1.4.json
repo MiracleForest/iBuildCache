@@ -1,0 +1,86 @@
+{
+  "plugin": "bsci",
+  "package": "bsci",
+  "version": "0.1.4",
+  "entry": "server",
+  "configs": {
+    "target_type": "server"
+  },
+  "revision": 5,
+  "upstream_commit": "f3fbbdca5df9c10b6c8f1276a7e0ee03497ad098",
+  "xmake_version": "2.9.7",
+  "toolchain": "msvc",
+  "upstream_toolchain": "msvc",
+  "alias_profiles": [
+    "msvc"
+  ],
+  "vs_toolset": "14.44.35207",
+  "recipe_commits": {
+    "levimc-repo": "2af594f80bb887417c85f12136c33fe5c14a1894",
+    "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+    "xmake-repo": "2eedd731d1e7e377bc0eea970b9f0c120ca5f00d"
+  },
+  "platform": {
+    "plat": "windows",
+    "arch": "x64",
+    "mode": "release"
+  },
+  "built_at": "2026-10-12T12:19:47Z",
+  "compiled_with": "msvc",
+  "entries": {
+    "server": {
+      "plugin": "bsci",
+      "package": "bsci",
+      "version": "0.1.4",
+      "entry": "server",
+      "configs": {
+        "target_type": "server"
+      },
+      "revision": 5,
+      "upstream_commit": "f3fbbdca5df9c10b6c8f1276a7e0ee03497ad098",
+      "xmake_version": "2.9.7",
+      "toolchain": "msvc",
+      "upstream_toolchain": "msvc",
+      "alias_profiles": [
+        "msvc"
+      ],
+      "vs_toolset": "14.44.35207",
+      "recipe_commits": {
+        "levimc-repo": "2af594f80bb887417c85f12136c33fe5c14a1894",
+        "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+        "xmake-repo": "2eedd731d1e7e377bc0eea970b9f0c120ca5f00d"
+      },
+      "platform": {
+        "plat": "windows",
+        "arch": "x64",
+        "mode": "release"
+      },
+      "built_at": "2026-10-12T12:19:47Z",
+      "artifacts": [
+        {
+          "package": "bsci",
+          "version": "0.1.4",
+          "buildhash": "cfa1cad206004f06aa16176fcff0772d",
+          "key": "windows-x64-vc-cfa1cad206004f06aa16176fcff0772d",
+          "toolset": "14.44.35207",
+          "release": "bsci_0",
+          "asset": "bsci-cfa1cad206004f06aa16176fcff0772d.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/bsci_0/bsci-cfa1cad206004f06aa16176fcff0772d.7z",
+          "sha256": "2a688e5ebec9b29c25723e295c2a4a049f3b474e980123e86c4d2bc0f58e9ca4",
+          "size": 1118043,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "bc50c698378a4440a85ba707b07bbf28",
+              "key": "windows-x64-vc-bc50c698378a4440a85ba707b07bbf28",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ],
+      "compiled_with": "msvc"
+    }
+  }
+}
