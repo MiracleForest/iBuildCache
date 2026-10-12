@@ -41,8 +41,8 @@
           "release": "libhat_0",
           "asset": "libhat-bfc5ac80a2ba46b3890d7852b6bb022e.7z",
           "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libhat_0/libhat-bfc5ac80a2ba46b3890d7852b6bb022e.7z",
-          "sha256": "912b41a5f68cbc55d09b9e68da0426748a956125d907b0cd27450e54bb45ad02",
-          "size": 43530,
+          "sha256": "96f3b99db71de3df7cdf2ea975f01a0ca7169b8880a27d7a137d806a7697e43c",
+          "size": 43486,
           "container": "7z",
           "aliases": [
             {

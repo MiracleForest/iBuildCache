@@ -1,0 +1,67 @@
+{
+  "package": "libhat",
+  "version": "2024.4.16",
+  "built_at": "2026-10-12T08:20:09Z",
+  "xmake_version": "2.9.7",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@0.13.3",
+  "entries": {
+    "default": {
+      "package": "libhat",
+      "version": "2024.4.16",
+      "built_at": "2026-10-12T08:20:09Z",
+      "xmake_version": "2.9.7",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@0.13.3",
+      "artifacts": [
+        {
+          "package": "libhat",
+          "version": "2024.4.16",
+          "buildhash": "bfc5ac80a2ba46b3890d7852b6bb022e",
+          "key": "windows-x64-vc-bfc5ac80a2ba46b3890d7852b6bb022e",
+          "toolset": "14.44.35207",
+          "release": "libhat_0",
+          "asset": "libhat-bfc5ac80a2ba46b3890d7852b6bb022e.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libhat_0/libhat-bfc5ac80a2ba46b3890d7852b6bb022e.7z",
+          "sha256": "96f3b99db71de3df7cdf2ea975f01a0ca7169b8880a27d7a137d806a7697e43c",
+          "size": 43486,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "f6fac68a7c0c432d8e906fbf944d99a0",
+              "key": "windows-x64-vc-f6fac68a7c0c432d8e906fbf944d99a0",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "e81f86885e3e4837b733dedcf9a03949",
+              "key": "windows-x64-vc-e81f86885e3e4837b733dedcf9a03949",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

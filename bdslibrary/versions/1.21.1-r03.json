@@ -1,0 +1,67 @@
+{
+  "package": "bdslibrary",
+  "version": "1.21.1-r03",
+  "built_at": "2026-10-12T08:20:09Z",
+  "xmake_version": "2.9.7",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@0.13.3",
+  "entries": {
+    "default": {
+      "package": "bdslibrary",
+      "version": "1.21.1-r03",
+      "built_at": "2026-10-12T08:20:09Z",
+      "xmake_version": "2.9.7",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@0.13.3",
+      "artifacts": [
+        {
+          "package": "bdslibrary",
+          "version": "1.21.1-r03",
+          "buildhash": "76f89834412e47c0a61f8379c159e5ac",
+          "key": "windows-x64-vc-76f89834412e47c0a61f8379c159e5ac",
+          "toolset": "14.44.35207",
+          "release": "bdslibrary_0",
+          "asset": "bdslibrary-76f89834412e47c0a61f8379c159e5ac.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/bdslibrary_0/bdslibrary-76f89834412e47c0a61f8379c159e5ac.7z",
+          "sha256": "e1e1c1f7d6f40e81734001fdecabdf3e9a341c2b9412563bbe7f1686b5f6d9c7",
+          "size": 10142395,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "489ecb32cc4246fb81d9e878fba37fdd",
+              "key": "windows-x64-vc-489ecb32cc4246fb81d9e878fba37fdd",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "368a64a65a9e42908f58fe8841dd0d35",
+              "key": "windows-x64-vc-368a64a65a9e42908f58fe8841dd0d35",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
