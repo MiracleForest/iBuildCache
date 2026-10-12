@@ -11,9 +11,6 @@ on:
     - cron: "0 */2 * * *"
   # A `revision` bump (or a new plugin) in config.json is the signal "everything
   # published so far is stale": the backlog then drains a few versions per run.
-  push:
-    paths:
-      - config.json
   workflow_dispatch:
     inputs:
       plugin:

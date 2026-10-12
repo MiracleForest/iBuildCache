@@ -502,6 +502,73 @@ def test_only_the_eras_that_build_with_llvm_22_download_it():
     assert plan.job({}, None, silent, "1.0.0", "a", {"id": "default"})["llvm"] is True
 
 
+def test_every_plugin_repairs_the_snapshot_not_only_the_one_being_built(monkeypatch, tmp_path: Path):
+    """A dependency is built from this snapshot too, and its repairs belong to its owner.
+
+    `bsci` builds LeviLamina, and the era data packages LL is built from (four
+    component versions xmake cannot parse) are repaired by the LeviLamina plugin --
+    not by the plugin being built. Repairing them only when LL itself is the
+    project left `bsci 0.1.6` unable to create `bedrock_runtime_api.lib`.
+    """
+    calls = []
+
+    class Other:
+        name = "ll"
+
+        def repair_recipes(self, config, source_name, snapshot):
+            calls.append((self.name, source_name))
+            return [f"{self.name} repaired something"]
+
+    monkeypatch.setattr("lib.plugins.load_all", lambda config: [Other()])
+    building = type("B", (), {"name": "bsci", "module": object()})()
+
+    notes = recipefix.plugin_repairs({}, building, "levimc-repo", tmp_path)
+
+    assert calls == [("ll", "levimc-repo")], calls
+    assert notes == ["ll repaired something"]
+    # the plugin being built is not asked twice
+    monkeypatch.setattr("lib.plugins.load_all", lambda config: [])
+    assert recipefix.plugin_repairs({}, building, "levimc-repo", tmp_path) == []
+
+
+def test_a_version_without_a_commit_is_given_the_one_its_tag_has(tmp_path: Path, monkeypatch):
+    """`add_versions("0.12.1")` leaves xmake cloning *by tag*, which fails upstream.
+
+    The repository tags its releases `v0.12.1`, so the clone dies with "Remote
+    branch 0.12.1 not found in upstream origin" -- before a single file is
+    compiled, and saying nothing about the recipe. The commit is looked up from
+    the repository's own tags; a version whose tag is not there is left alone.
+    """
+    root = tmp_path / "levimc-repo@test"
+    recipe = root / "packages" / "m" / "more-dimensions" / "xmake.lua"
+    recipe.parent.mkdir(parents=True)
+    recipe.write_text(
+        'package("more-dimensions")\n'
+        '    add_urls("https://github.com/LiteLDev/MoreDimensions.git")\n'
+        '    add_versions("0.12.1")\n'
+        '    add_versions("0.13.0", "3d89965e0b5208aff1462a2bb09f97bb6034cfb0")\n'
+        '    add_versions("0.9.0")\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        recipefix,
+        "_tags_of",
+        lambda url: {"v0.12.1": "25db4b9319db98c37323c952a036d8b7a8d73a8f"},
+    )
+
+    notes = recipefix.backfill_commits(root)
+
+    assert len(notes) == 1, notes
+    text = util.read_text(recipe)
+    assert 'add_versions("0.12.1", "25db4b9319db98c37323c952a036d8b7a8d73a8f")' in text
+    # the one that already had a commit is untouched, and the one with no tag is
+    # left exactly as it was (a clone failure is better than a wrong commit)
+    assert 'add_versions("0.13.0", "3d89965e0b5208aff1462a2bb09f97bb6034cfb0")' in text
+    assert 'add_versions("0.9.0")' in text
+    # idempotent: nothing left to backfill
+    assert recipefix.backfill_commits(root) == []
+
+
 def test_the_git_shim_retries_a_ref_upstream_spells_another_way():
     """A recipe may name `0.4.0` where upstream tags it `v0.4.0`.
 
@@ -1416,6 +1483,214 @@ def test_the_extra_closure_is_built_not_only_declared(tmp_path: Path):
     assert build.extra_requires(config, ctx, [("levimc-repo", repo)], []) == []
 
 
+class _StubPlugin:
+    """The smallest plugin the planning and version logic ever asks anything."""
+
+    def __init__(self, name, package, deps=(), versions=(), entries=(), specs=()):
+        self.name = name
+        self._package = package
+        self._deps = list(deps)
+        self._versions = list(versions)
+        self._entries = list(entries) or [{"id": "default", "configs": {}}]
+        self._specs = list(specs)
+
+    def call(self, function, *args, **kwargs):
+        if function == "metadata":
+            return {"id": self.name, "package": self._package}
+        if function == "extra_deps":
+            return list(self._deps)
+        if function == "dependency_specs":
+            return list(self._specs)
+        if function == "list_versions":
+            return [{"version": item, "commit": "ab" * 20} for item in self._versions]
+        if function == "recipe_cutoff":
+            return None
+        if function == "recipe_dir":
+            return None
+        return None
+
+    def entries(self, ctx, version, commit, settings=None):
+        return list(self._entries)
+
+
+def test_the_plugin_being_built_repairs_its_own_snapshot(tmp_path: Path, monkeypatch):
+    """The one plugin that must run is the one whose project this is.
+
+    Its ``repair_recipes`` is what prepares the project's own recipe -- for the
+    upstream plugin that means injecting the block that pins the SDK versions the
+    project leaves open. A "already seen" set seeded with its name made the loop
+    skip it, so such a project was built against today's newest SDK (compiled a
+    second time inside the dependent's job, then packed and uploaded again), while
+    every *other* plugin's repairs still ran and hid the bug.
+    """
+    calls: list[str] = []
+
+    class Fake:
+        def __init__(self, name):
+            self.name = name
+
+        def repair_recipes(self, config, source_name, snapshot):
+            if source_name == "some-repo":
+                calls.append(self.name)
+                return [f"{self.name}: repaired"]
+            return []
+
+    building = Fake("the-one-being-built")
+    monkeypatch.setattr(plugins, "load_all", lambda config: [building, Fake("another")])
+    notes = recipefix.plugin_repairs({}, building, "some-repo", tmp_path)
+    assert calls == ["the-one-being-built", "another"], calls
+    assert notes == ["the-one-being-built: repaired", "another: repaired"], notes
+    # a plugin the config does not list (a probe) still gets its turn, once
+    monkeypatch.setattr(plugins, "load_all", lambda config: [Fake("another")])
+    calls.clear()
+    notes = recipefix.plugin_repairs({}, Fake("probe-only"), "some-repo", tmp_path)
+    assert calls == ["probe-only", "another"], calls
+
+
+def test_a_snapshot_that_predates_the_release_declares_the_version(tmp_path: Path):
+    """A recipe newer than the version cannot fetch it, and says something else.
+
+    The snapshot is taken just before the release, so the version it is built for
+    may not be in the recipe at all; xmake then fetches a git package by *tag*,
+    and these projects tag with a "v" ("v0.12.1" against the recipe's "0.12.1"),
+    which fails with "fatal: Remote branch 0.12.1 not found in upstream origin".
+    """
+    snapshot = tmp_path / "levimc-repo@0.12.1"
+    recipe = snapshot / "packages" / "m" / "more-dimensions"
+    recipe.mkdir(parents=True)
+    (recipe / "xmake.lua").write_text(
+        'package("more-dimensions")\n'
+        '    add_urls("https://github.com/LiteLDev/MoreDimensions.git")\n'
+        '    add_versions("0.12.0", "213818c9653fd9db63a279e9afbf893aed68efcc")\n'
+        "    on_install(function (package) end)\n",
+        encoding="utf-8",
+    )
+    prepared = {"levimc-repo": (snapshot, "b3d8952f8120")}
+    notes = recipefix.declare_version(prepared, "more-dimensions", "0.12.1", "25db4b93" * 5)
+    assert notes and "0.12.1" in notes[0], notes
+    text = (recipe / "xmake.lua").read_text(encoding="utf-8")
+    assert 'add_versions("0.12.1", "' + "25db4b93" * 5 + '")' in text
+    # the version that was already there is untouched, and the call is a no-op
+    assert 'add_versions("0.12.0", "213818c9653fd9db63a279e9afbf893aed68efcc")' in text
+    assert recipefix.declare_version(prepared, "more-dimensions", "0.12.1", "x") == []
+    assert text == (recipe / "xmake.lua").read_text(encoding="utf-8")
+
+    # a recipe that lists its versions in a file gets the line there
+    listing_dir = tmp_path / "levimc-repo@1.9.4" / "packages" / "l" / "levilamina"
+    (listing_dir / "versions").mkdir(parents=True)
+    (listing_dir / "xmake.lua").write_text(
+        'package("levilamina")\n    add_versionfiles("versions/versions.txt")\n',
+        encoding="utf-8",
+    )
+    (listing_dir / "versions" / "versions.txt").write_text(
+        "1.9.0 abcdef\n", encoding="utf-8"
+    )
+    files = {"levimc-repo": (tmp_path / "levimc-repo@1.9.4", "deadbeef")}
+    assert recipefix.declare_version(files, "levilamina", "1.9.4", "0123456789")
+    assert (listing_dir / "versions" / "versions.txt").read_text(
+        encoding="utf-8"
+    ) == "1.9.0 abcdef\n1.9.4 0123456789\n"
+    assert recipefix.declare_version(files, "levilamina", "1.9.4", "0123456789") == []
+
+    # a package the snapshot does not carry is skipped
+    assert recipefix.declare_version(files, "not-here", "1.0.0", "abc") == []
+
+
+def test_the_projects_own_pin_forces_the_sdk_version():
+    """A recipe's range is not what a project of its own age was built against.
+
+    ``more-dimensions`` 0.12.1 pins ``levilamina 1.7.6`` in its own file while its
+    recipe allows ``>=1.7.6 <1.8.0``, and xmake reads the prerelease `1.8.0-rc.2`
+    as inside that -- an SDK whose generated headers do not even compile. The
+    project's own version is forced on the resolve tree instead (``add_requireconfs``
+    in ``build_once``), and a dependency the project leaves open gets the era's
+    answer, the same one the project's own build is pinned to.
+    """
+    ctx = plugins.Context(dict(util.load_config()))
+    pinned = _StubPlugin("moredimensions", "more-dimensions",
+                         deps=[{"name": "levilamina", "version": "1.7.6"}])
+    # the recipe declares that name too, so it is not asked for directly
+    forced = build.dependency_overrides(
+        ctx, pinned, "0.12.1", "25db4b93", [], {}
+    )
+    assert forced == {"levilamina": "1.7.6"}
+
+    # a dependency the project names without a version takes the era's answer
+    open_dep = _StubPlugin("bsci", "bsci", deps=[{"name": "levilamina", "version": ""}])
+    assert build.dependency_overrides(
+        ctx, open_dep, "0.4.0", "4c88ff64", [], {"levilamina": "26.20.0"}
+    ) == {"levilamina": "26.20.0"}
+
+    # a range of its own is a deliberate statement, and is left to the resolvers
+    ranged = _StubPlugin("bsci", "bsci", deps=[{"name": "levilamina", "version": "26.20.*"}])
+    assert build.dependency_overrides(ctx, ranged, "0.4.0", "4c88ff64", [], {}) == {}
+    assert plan.own_pins(ranged, ctx, "0.4.0", "4c88ff64") == {}
+
+
+def test_an_entry_can_say_which_versions_have_that_dimension(tmp_path: Path):
+    """Not every version of a project has every build dimension.
+
+    ``bsci`` only grew its ``target_type`` option at 0.3.0: asking 0.1.6 for a
+    client artifact resolves a client LeviLamina its era never published, and the
+    project's own file does not even mention the option. The bounds are declared
+    with the project (``config.json``), not invented by the framework.
+    """
+    import importlib.util
+
+    path = ROOT / "plugins" / "upstream.py"
+    spec = importlib.util.spec_from_file_location("upstream_plugin_test", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    plugin = module.create(
+        {
+            "id": "bsci",
+            "recipe_package": "bsci",
+            "entries": [
+                {"id": "server", "configs": {"target_type": "server"}},
+                {"id": "client", "from": "0.3.0", "configs": {"target_type": "client"}},
+                {"id": "legacy", "until": "0.1.6", "configs": {}},
+            ],
+        }
+    )
+    ctx = plugins.Context(dict(util.load_config()))
+    ids = [item["id"] for item in plugin.entries(ctx, "0.1.6", "abc")]
+    assert ids == ["server", "legacy"], ids
+    ids = [item["id"] for item in plugin.entries(ctx, "0.3.0", "abc")]
+    assert ids == ["server", "client"], ids
+    # the bounds are not part of the entry a job is built from
+    assert all("from" not in item and "until" not in item
+               for item in plugin.entries(ctx, "0.3.0", "abc"))
+    # a version nothing can compare (a branch) keeps every entry rather than
+    # silently publishing nothing
+    assert len(plugin.entries(ctx, "main", "abc")) == 3
+
+
+def test_the_planned_sdk_is_the_version_the_project_pins():
+    """Planning has to make the same call as the build, or it queues a stranger.
+
+    The recipe's range resolves to the newest SDK there is; the project's own file
+    pins the one its sources were written against. A round that planned the range
+    would build and publish an SDK the dependent never installs, and leave the one
+    it does need unbuilt -- and make the dependent wait for the wrong artifact.
+    """
+    config = dict(util.load_config())
+    ctx = plugins.Context(config)
+    project = _StubPlugin(
+        "moredimensions",
+        "more-dimensions",
+        deps=[{"name": "levilamina", "version": "1.7.6"}],
+        specs=["levilamina >=1.7.6 <1.8.0", "levilamina 1.7.6"],
+    )
+    owner = _StubPlugin("ll", "levilamina", versions=["1.8.0-rc.2", "1.7.7", "1.7.6"])
+    jobs = [plan.job(config, ctx, project, "0.12.1", "25db4b93", {"id": "default", "configs": {}})]
+    first, dependencies, waiting, notes = plan.split(
+        config, ctx, [project, owner], jobs, lambda package, version: False
+    )
+    assert [item["version"] for item in dependencies] == ["1.7.6"], (dependencies, notes)
+    assert waiting and waiting[0]["waits_for"] == ["levilamina@1.7.6"], waiting
+    assert first == []
+
+
 def test_copy_only_dependencies_are_not_cached(tmp_path: Path):
     """Nothing compiled means nothing to precompile.
 
@@ -1545,6 +1820,22 @@ def test_old_era_sources_stop_reaching_into_the_stl(tmp_path: Path):
     assert "std::_Construct_from_invoke_result_tag{}," in text
     assert "std::invoke(std::forward<Fn>(fn), static_cast<T&>(*mPtr))" in text
     assert "{plain = true})" in text
+    # 0.13.x reached into the STL for the other one too: its tuple-like concept
+    # named ``std::_Is_std_array_v``/``std::_Is_subrange_v``, which newer STLs do
+    # not expose -- and because it is a *header*, every consumer that compiled
+    # against the SDK failed with C3878/C2039 inside it:
+    assert 'local file = "src/ll/api/base/Concepts.h"' in text
+    assert "::std::_Is_std_array_v<T>" in text
+    # ... and the repair spells both traits out locally, keeping the expression
+    # that used them (so tuple, pair, array and subrange all stay tuple-like)
+    assert "struct is_std_array<::std::array<T, N>> : ::std::true_type {};" in text
+    assert "struct is_subrange<::std::ranges::subrange<I, S, K>> : ::std::true_type {};" in text
+    assert "|| is_specialization_of_v<T, ::std::pair> || is_std_array_v<T> || is_subrange_v<T>;" in text
+    assert "concept TupleLike = tuple_like_impl<std::remove_cvref_t<T>>" in text
+    # the names it now mentions bring their own headers
+    assert '"src/ll/api/base/Concepts.h", "<array>"' in text or "#include <array>" in text
+    assert "#include <ranges>" in text
+    assert "std::tuple_size<std::remove_cvref_t<T>>::value;" in text
 
 
 def test_repaired_versions_are_renamed_where_the_resolver_reads_them(tmp_path: Path):
@@ -1667,6 +1958,50 @@ def test_upstream_pins_are_rewritten_while_the_project_builds(tmp_path: Path):
     assert ll.module._patch_upstream_sources(snapshot, renames) == []
 
 
+def test_an_owned_packages_dependency_artifact_takes_the_entry_it_matches(monkeypatch, tmp_path: Path):
+    """A plugin's own package has entries; a dependency record must not add "default".
+
+    LeviLamina is both a project of its own plugin and a dependency of every LL
+    plugin, so a plugin's round can publish an artifact of it first. Those carry
+    the configs they were built with (`target_type=client`), which is exactly one
+    of the owner's entries -- and recording it as `default` would put an entry the
+    project does not have next to its own, in the ledger and in every release body
+    that shows the column. Configs no entry matches are left to the owner's build.
+    """
+    ll = next(item for item in plugins.load_all(util.load_config()) if item.name == "ll")
+    monkeypatch.setattr(finalize.plugins, "load_all", lambda config: [ll])
+    monkeypatch.setattr(
+        ll.module, "list_versions", lambda ctx: [{"version": "26.51.6", "commit": "aaa"}]
+    )
+    monkeypatch.setattr(
+        ll.module,
+        "upstream_xmake_lua",
+        lambda ctx, commit: 'option("target_type")\nset_values("server", "client")\n',
+    )
+    ctx = plugins.Context(dict(util.load_config(), _index_dir=str(tmp_path / "index")))
+
+    assert finalize._owning_entry(ctx, "levilamina", "26.51.6", {"target_type": "client"}) == "client"
+    assert finalize._owning_entry(ctx, "levilamina", "26.51.6", {"target_type": "server"}) == "server"
+    # configs no entry of the owner matches are left to the owner's own build
+    assert finalize._owning_entry(ctx, "levilamina", "26.51.6", {"target_type": "arm"}) == ""
+    # and a package the owner does not publish says nothing at all
+    assert finalize._owning_entry(ctx, "fmt", "11.2.0", {}) == ""
+
+
+def test_default_is_not_an_entry_a_reader_ever_sees():
+    """"default" is the framework's name for "no build dimension".
+
+    MoreDimensions is the same API for a client and a server, so it is built once
+    and has nothing to say in an `entry` column -- which then drops itself, as a
+    column empty in every row does.
+    """
+    assert reports.artifact_row({}, version="0.14.1", entry_id="default", own=True)["entry"] == ""
+    # a project that does have dimensions keeps them
+    assert reports.artifact_row({}, entry_id="server", own=True)["entry"] == "server"
+    # a dependency is never given one
+    assert reports.artifact_row({}, entry_id="server", own=False)["entry"] == ""
+
+
 def test_dependencies_are_recorded_once_without_an_entry(tmp_path: Path):
     """Only the project's own package has an entry dimension."""
     config = dict(util.load_config())
@@ -1769,11 +2104,53 @@ def test_eras_use_the_toolset_the_image_has():
     old for those sources (preloader dies in unordered_set, LeviLamina's own
     optional_ref.h cannot use std::optional the way it does), while the missing
     include the newest STL complained about is repaired in the sources instead.
+    The era is expressed by the *image* alone, for every plugin that builds with
+    the xmake of its own time.
     """
-    ll = next(
-        item for item in plugins.load_all(util.load_config()) if item.name == "ll"
+    from lib import semver, xmake_env
+
+    config = dict(util.load_config())
+    ctx = plugins.Context(config)
+    ll = next(item for item in plugins.load_all(config) if item.name == "ll")
+    for version, commit in (("26.51.6", "a" * 40), ("1.4.4", "b" * 40)):
+        plan = ll.module.toolchain_plan(ctx, version, commit)
+        assert plan["vs_toolset"] is None, plan
+    # an era xmake that predates a Visual Studio generation gets the image that
+    # has one it knows; a current era keeps the current image
+    assert xmake_env.era_image("3.1.1") == ("windows-latest", "win25")
+    assert xmake_env.era_image("3.0.2") == ("windows-2022", "win22")
+    assert xmake_env.era_image("2.8.6") == ("windows-2022", "win22")
+    # the table is ordered newest floor first, so the first match is the answer
+    floors = [semver.key(floor) for floor, _runner, _imageos in xmake_env.ERA_IMAGES]
+    assert floors == sorted(floors, reverse=True)
+
+
+def test_an_upstream_project_gets_the_image_of_its_era(tmp_path: Path):
+    """A project built with an old xmake cannot be driven on today's image.
+
+    ``bsci`` 0.1.7 died with ``vs not found!`` on every attempt: its era xmake is
+    3.0.2, which does not know Visual Studio 18, so the CMake-based dependency
+    (entt) could not configure at all -- a failure that names no version.
+    """
+    import importlib.util
+
+    path = ROOT / "plugins" / "upstream.py"
+    spec = importlib.util.spec_from_file_location("upstream_plugin_test2", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    plugin = module.create(
+        {
+            "id": "bsci",
+            "recipe_package": "bsci",
+            "upstream_repo": "OEOTYAN/BedrockServerClientInterface",
+        }
     )
-    assert all(toolset is None for _floor, _runner, _imageos, toolset in ll.module.ERA_IMAGES)
+    ctx = plugins.Context(dict(util.load_config()))
+    plugin.commit_date = lambda ctx, commit: "2025-09-14T00:00:00Z"
+    plan = plugin.toolchain_plan(ctx, "0.1.7", "c" * 40)
+    assert plan["image"] == "windows-2022", plan
+    assert plan["imageos"] == "win22"
+    assert plan["era_xmake"] and plan["era_xmake"].startswith("3."), plan
 
 
 def test_pre_2_9_4_xmake_gets_the_toolset_fix_backported(tmp_path: Path):

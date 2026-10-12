@@ -168,6 +168,7 @@
           },
           {
             "id": "client",
+            "from": "0.3.0",
             "configs": {
               "target_type": "client"
             }

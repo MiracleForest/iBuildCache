@@ -170,9 +170,49 @@ class _UpstreamPlugin:
         return [item for item in found if item["toolchain"] in allowed]
 
     def xmake_version(self, ctx, version: str, commit: str) -> str:
+        """The xmake the project was released with -- its own, never a newer one.
+
+        Deliberately not clamped to ``xmake.minArtifactsVersion``, exactly like
+        LeviLamina's own plugin (see its ``xmake_version``): a project's build is
+        driven by the tooling of its time. The clamp used to raise an era that
+        predates the floor to the *newest* xmake there is, so `bsci` 0.1.6 -- whose
+        era is 2.9.8 -- was built by 3.1.1 after all: a new xmake driving the era's
+        own link rule and its era's `prelink`, which report a format mismatch deep
+        inside the tool ("Cannot create bedrock_runtime_api.lib, no such file or
+        directory") instead of anything a recipe could be blamed for.
+
+        The image the job runs on follows from the same value (see toolchain_plan),
+        so both have to come from one place.
+        """
+        return self._era_xmake(ctx, commit)
+
+    def _era_xmake(self, ctx, commit: str) -> str:
         from lib import xmake_env
 
-        return xmake_env.xmake_version_for_date(ctx.config, self.commit_date(ctx, commit))
+        return xmake_env.xmake_version_for_date(
+            ctx.config, self.commit_date(ctx, commit), floor="0.0.0"
+        )
+
+    def toolchain_plan(self, ctx, version: str, commit: str) -> dict:
+        """The image the era's xmake needs to run on.
+
+        A project built with the xmake of its own time needs the image of that
+        generation too, and for the same reason LeviLamina's own plugin does: an
+        xmake that predates a Visual Studio cannot drive it, and a CMake-based
+        *dependency* then dies with ``vs not found!`` -- which names no version,
+        no package and no recipe. That is how ``bsci`` 0.1.7 failed on every
+        attempt: xmake 3.0.2 asking the windows-latest image of 2026 for MSVC
+        14.51, a Visual Studio generation it has never heard of.
+
+        Nothing else is pinned here: the toolset stays whatever the image has (the
+        era's own generation, which is the point), and an era recent enough for the
+        current image keeps it.
+        """
+        from lib import xmake_env
+
+        era = self._era_xmake(ctx, commit)
+        runner, imageos = xmake_env.era_image(era)
+        return {"era_xmake": era, "image": runner, "imageos": imageos}
 
     def recipe_cutoff(self, ctx, version: str, commit: str) -> str:
         return self.commit_date(ctx, commit)
@@ -197,11 +237,30 @@ class _UpstreamPlugin:
         return entries[0]["configs"] if entries else {}
 
     def entries(self, ctx, version: str, commit: str) -> list[dict]:
-        """Entries declared by the settings (``id`` + package ``configs``)."""
+        """Entries declared by the settings (``id`` + package ``configs``).
+
+        An entry may carry ``from`` / ``until`` bounds (inclusive, semver) for the
+        versions it exists in. A build dimension is not automatically a property of
+        every version of a project: ``bsci`` only grew its ``target_type`` option at
+        0.3.0, so asking 0.1.6 for a client artifact resolves a client LeviLamina
+        its era never published -- a failure about a dependency the project's own
+        file does not even name (it has no such option to name it with), while the
+        server artifact of that version is fine. Which versions of a project have
+        which dimension is that project's knowledge, so it is declared with it.
+        """
         declared = self.settings.get("entries")
-        if declared:
-            return declared
-        return [{"id": "default", "configs": self.settings.get("configs") or {}}]
+        if not declared:
+            return [{"id": "default", "configs": self.settings.get("configs") or {}}]
+        found = []
+        for item in declared:
+            entry = dict(item) if isinstance(item, dict) else {"id": item}
+            low = str(entry.pop("from", "") or "")
+            high = str(entry.pop("until", "") or "")
+            if not _in_version_range(version, low, high):
+                continue
+            entry.setdefault("configs", {})
+            found.append(entry)
+        return found
 
     def extra_deps(self, ctx, version: str, commit: str) -> list[dict]:
         """Dependencies only named by the upstream project's own xmake.lua."""
@@ -268,6 +327,25 @@ class _UpstreamPlugin:
             util.write_text(recipe, text.replace(find, replace))
             notes.append(f"{package}: repaired recipe ({find!r} -> {replace!r})")
         return notes
+
+
+def _in_version_range(version: str, low: str, high: str) -> bool:
+    """Is ``version`` within ``[low, high]`` (both optional, both inclusive)?
+
+    A version the comparison cannot read (a branch name, a date-like tag) keeps
+    every entry: dropping one because of a parsing quirk would silently stop
+    publishing something that worked.
+    """
+    if not low and not high:
+        return True
+    try:
+        if low and semver.lt(version, low):
+            return False
+        if high and semver.gt(version, high):
+            return False
+    except ValueError:
+        return True
+    return True
 
 
 def _pin_project_requires(recipe: Path) -> list[str]:

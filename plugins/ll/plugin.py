@@ -406,6 +406,13 @@ _ERA_INCLUDES = {
     "libhat": [
         ("include/libhat/Process.hpp", "<string>", "std::string"),
     ],
+    # The repair below spells the two tuple-like traits out itself, so the header
+    # needs the names it now mentions: 0.13.x reached for MSVC STL internals and
+    # got away without including their headers.
+    "levilamina": [
+        ("src/ll/api/base/Concepts.h", "<array>", "std::array"),
+        ("src/ll/api/base/Concepts.h", "<ranges>", "std::ranges::subrange"),
+    ],
 }
 
 #: The old era also reached *into* the STL: ``optional_ref::transform`` built its
@@ -424,6 +431,54 @@ _ERA_EDITS = {
             "std::optional<UnwrapT>{\n"
             "                    std::invoke(std::forward<Fn>(fn), static_cast<T&>(*mPtr))\n"
             "                }",
+        ),
+        # 0.13.x built its tuple-like notion out of MSVC STL internals. Newer STLs
+        # do not expose them any more, and because this is a *header* it hits every
+        # consumer that compiles against the SDK:
+        #
+        #     ll/api/base/Concepts.h(121): error C3878: syntax error ...
+        #     ll/api/base/Concepts.h(121): error C2039: "_Is_std_array_v": is not a
+        #         member of "std"
+        #
+        # (the syntax error is just the fallout of the unresolved name). The two
+        # traits are spelled out here instead -- same notion, no STL internals --
+        # and the expression that used them stays as it was.
+        (
+            "src/ll/api/base/Concepts.h",
+            "template <class T>\n"
+            "inline constexpr bool tuple_like_impl =\n"
+            "    is_specialization_of_v<T, ::std::tuple> || is_specialization_of_v<T, ::std::pair> || ::std::_Is_std_array_v<T>\n"
+            "    || ::std::_Is_subrange_v<T>;\n"
+            "\n"
+            "template <class T>\n"
+            "concept TupleLike = tuple_like_impl<std::remove_cvref_t<T>> || (!Rangeable<T> && requires(T t) {\n"
+            "                        std::tuple_size<std::remove_cvref_t<T>>::value;\n"
+            "                        std::get<0>(t);\n"
+            "                    });",
+            "template <class T>\n"
+            "struct is_std_array : ::std::false_type {};\n"
+            "template <class T, ::std::size_t N>\n"
+            "struct is_std_array<::std::array<T, N>> : ::std::true_type {};\n"
+            "template <class T>\n"
+            "inline constexpr bool is_std_array_v = is_std_array<::std::remove_cvref_t<T>>::value;\n"
+            "\n"
+            "template <class T>\n"
+            "struct is_subrange : ::std::false_type {};\n"
+            "template <class I, class S, ::std::ranges::subrange_kind K>\n"
+            "struct is_subrange<::std::ranges::subrange<I, S, K>> : ::std::true_type {};\n"
+            "template <class T>\n"
+            "inline constexpr bool is_subrange_v = is_subrange<::std::remove_cvref_t<T>>::value;\n"
+            "\n"
+            "template <class T>\n"
+            "inline constexpr bool tuple_like_impl =\n"
+            "    is_specialization_of_v<T, ::std::tuple>\n"
+            "    || is_specialization_of_v<T, ::std::pair> || is_std_array_v<T> || is_subrange_v<T>;\n"
+            "\n"
+            "template <class T>\n"
+            "concept TupleLike = tuple_like_impl<std::remove_cvref_t<T>> || (!Rangeable<T> && requires(T t) {\n"
+            "                        std::tuple_size<std::remove_cvref_t<T>>::value;\n"
+            "                        std::get<0>(t);\n"
+            "                    });",
         ),
     ],
 }
@@ -637,45 +692,23 @@ def should_skip(ctx, version: str, commit: str) -> tuple[bool, str]:
     )
 
 
-# Which CI image an era's xmake can drive. Floors are checked newest first;
-# "win25" means the current windows-latest image.
-#
-# The images used to be pinned to a toolset of the era's own generation, but the
-# hosted images no longer carry one: in 2026 windows-2022 ships Visual Studio
-# 17.14 with MSVC 14.44 only (asking for --vs_toolset=14.38 makes xmake report
-# "vs not found!" and every package fail), and windows-2019 -- the image the
-# oldest era needed -- has been retired. So the era is now expressed by the image
-# alone and an old xmake gets whatever MSVC that image has. If that turns out to
-# be unusable for a version, the build fails loudly and the entry is requeued;
-# producing artifacts with a compiler the era does not understand would be worse.
-ERA_IMAGES = [
-    # era xmake floor, runner label, GitHub ImageOS value, msvc toolset
-    ("3.1.0", "windows-latest", "win25", None),
-    ("0.0.0", "windows-2022", "win22", None),
-]
+# The era-to-image mapping itself is shared with every other plugin that builds a
+# version with the xmake of its own time (see lib/xmake_env.ERA_IMAGES).
 LOCAL_IMAGEOS = "win25"
 
 
 def toolchain_plan(ctx, version: str, commit: str) -> dict:
     """Era xmake plus the image/toolset that can serve it."""
-    from lib import semver, xmake_env
+    from lib import xmake_env
 
     era = xmake_env.xmake_version_for_date(
         ctx.config, commit_date(ctx, commit), floor="0.0.0"
     )
-    for floor, runner, imageos, toolset in ERA_IMAGES:
-        if semver.ge(era, floor):
-            return {
-                "era_xmake": era,
-                "image": runner,
-                "imageos": imageos,
-                "vs_toolset": toolset,
-                "llvm": needs_llvm22(version),
-            }
+    runner, imageos = xmake_env.era_image(era)
     return {
         "era_xmake": era,
-        "image": "windows-2022",
-        "imageos": "win22",
+        "image": runner,
+        "imageos": imageos,
         "vs_toolset": None,
         "llvm": needs_llvm22(version),
     }

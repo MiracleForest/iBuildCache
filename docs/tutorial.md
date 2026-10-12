@@ -122,10 +122,48 @@ msvc 工具链，而它的预编译选择逻辑要求「存在已 check、带 vc
 }
 ```
 
+通用插件的全部字段（都写在 `settings` 里，除前三项外都可省）：
+
+| 字段 | 作用 |
+|---|---|
+| `id` / `display` | 插件名（`cache.py`/`discover.py` 的 `--plugin` 用它）与报表里的显示名 |
+| `upstream` / `upstream_repo` | 工程源码仓库（用来取该版本的 commit 日期、读它自己的 `xmake.lua`） |
+| `recipe_source` / `recipe_package` | 配方在哪个源里、叫什么名字；**`recipe_package` 同时就是发布出去的包名**（消费端 `add_requires("<它> <版本>")`） |
+| `extra_packages` | 工程自己的 `xmake.lua` 里 require、而**属于我们自己会发布的包**（一般是 `["levilamina"]`）：排队列时先把这些 SDK 的 job 排到前面，依赖方等着复用，不用自己再编一遍 |
+| `entries` | 要编几个条目（构建维度）：`[{"id": "server", "configs": {...}}, ...]`；条目可加 `from` / `until` 版本区间（含端点），例如 `{"id": "client", "from": "0.3.0", ...}` —— 只有那几个版本真的有这个维度时才声明 |
+| `configs` | 单条目项目的默认 configs（`entries` 缺省时用） |
+| `toolchain` / `native_toolchain` | 编缓存用哪个工具链（默认 `msvc`）；工程自己用的是另一个时用 `native_toolchain` 说明（只记录进索引） |
+| `toolchainAliases` | 还能被哪些消费端工具链命中同一份产物（见下节；只声明这个版本真支持的） |
+| `recipeEdits` | 配方里必须改的文本：`[{"find": "...", "replace": "..."}]`，只改**我们沙箱里**的快照 |
+| `skipBelow` / `skipVersions` | 声明"这些版本本质编不出来"（年代工具/格式问题、上游源码本身编不过）：不排队列，日志里会说明跳过了哪些 |
+| `assetName` | 自定义 asset 文件名模板（默认 `<库名>-<buildhash>.<ext>`） |
+
+接入一个项目的清单：
+
+1. 确认它的版本能在某个配方源里查到（`recipes.sources` 里已有 `levimc-repo` / `oeotyan-repo` / `xmake-repo`；别处再加一条）；
+2. 往 `config.json` 的 `plugins` 加一段上面的 `settings`；
+3. 本地先看计划：`python scripts/discover.py --plugin <id> --report-skipped --out matrix.json`，
+   确认版本、条目、以及"要先编哪个 SDK"都符合预期；
+4. 触发一轮：`gh workflow run build.yml -f plugin=<id>`（只想先试一个版本再加 `-f version=<版本>`）；
+5. `finalize` 会把 manifest 推到消费端仓库，消费端写 `add_requires("<包名> <版本>")` 即可命中。
+
+年代的 xmake 与 CI 镜像由插件决定（`xmake_version` / `toolchain_plan`）：**工程用自己发布
+时的那个 xmake 编**，镜像也随之换成那个年代的（见 §9 与「常见报错」里的 `vs not found!`）。
+
 新增配方源只要往 `recipes.sources` 加一条（例如 `oeotyan-repo`）。构建时框架会把这些
 源**快照回该版本发布前后的状态**（保证用那个年代的配方与依赖版本编出那个年代的产物），
 顺手修历史遗留问题（坏补丁、xmake 解析不了的四段版本号）—— 修的是**我们沙箱里**的快照，
 发布出去的只有 manifest，官方配方、依赖名、版本号一概不动。
+
+快照有两个坑要填，都在 `scripts/lib/recipefix.py` 里：
+
+* 快照取的是**发布之前**（cutoff 的含义），而发布那一下通常就是往配方里加这个版本的
+  commit —— 于是快照里根本没有这次要编的版本，xmake 找不到源码就只能**按 tag 拉**，
+  而这些仓库的 tag 带 `v`（`v0.12.1` vs 配方里的 `0.12.1`），报的是
+  `fatal: Remote branch 0.12.1 not found in upstream origin`（`declare_version` 补上
+  版本与 commit，就是发布 commit 后来自己写的那一行）；
+* 版本声明了却没有 commit（`add_versions("0.12.1")`），xmake 同样会按 tag 拉
+  （`backfill_commits` 用仓库自己的 tag 查出 commit 补上）。
 
 ### 别名（同一个产物，多个地址）
 
@@ -229,6 +267,25 @@ SDK"。所以 `discover` 在排队列时会先**把依赖版本提取出来**：
 依赖）：依赖方留在第一阶段，按老办法把没发布的那部分自己编掉并作为依赖记录发布。方向是
 安全的——任何情况下都往前走，不存在"等一个永远对不上的 hash"。
 
+### 版本谁说了算：工程自己 `xmake.lua` 里的锁
+
+同一个依赖往往被声明两次：配方里是**范围**（`levilamina >=1.7.6 <1.8.0`），工程自己的
+`xmake.lua` 里是**它当年真正用的那个版本**（`levilamina 1.7.6`）。xmake 会在满足范围的
+版本里挑最新的，而预发布版也算满足（`1.8.0-rc.2 < 1.8.0`），于是
+`more-dimensions` 0.12.1 会解析到 1.8.0-rc.2 —— 一个它没写过、而且头文件本身就不是合法
+C++ 的 SDK（`mc/util/ThreadOwner.h` 把 `enum class` 的模板默认参数写成 `= 0`）。
+
+更麻烦的是：工程自己的 `add_packages("levilamina")` 不带版本，xmake 会用**沙箱里最好的
+那个** —— 也就是外层配方解析出来的那个，而不是工程自己 require 的那个。所以：
+
+* 构建时把工程自己锁定的版本**强制到整棵解析树**（`add_requireconfs("**.levilamina",
+  {override = true, version = "1.7.6"})`，见 `build.py::dependency_overrides`）；工程自己
+  没写版本时用年代答案，也就是 `dependency_pins` 给工程自己那个 build 的同一个版本；
+* `discover` 排队列时必须做**同一个判断**（`plan.own_pins`），否则会去编一个依赖方根本
+  不安装的 SDK（还让它等在那里），而真正要的 SDK 一个都没编；
+* 产物地址（buildhash）只由平台/架构/configs/源码 hash/工具链决定，跟依赖版本无关，
+  所以按工程自己的锁编出来的产物，消费端照样能按名字命中。
+
 ## 9. CI
 
 `.github/workflows/build.yml`：`discover → build(矩阵) → finalize(串行)`。
@@ -275,5 +332,8 @@ python scripts/selftest.py --component levilamina --toolchain clang-cl
 | `manifest.txt not found when installing artifacts` | 压缩包内部层级不对（必须三段后再放文件） |
 | `cannot extract ... .tar.zst` | 该包容器不是 7z |
 | `unable to parse semver` | 老配方有四段版本号 → `recipefix.normalize_tree` 会剔除 |
+| `Cannot create bedrock_runtime_api.lib` | 那个年代的 `prelink` 工具与后来的数据/对象格式不同（`bsci` ≤0.1.6 用的 prelink v0.3.0 就是这种），工具本身也修不了 → 用插件配置里的 `skipBelow`/`skipVersions` 声明这些版本不参与预编译 |
+| `vs not found!` | 年代 xmake 太老、不认识镜像上的 Visual Studio（例如 3.0.2 对 VS 2026）→ `lib/xmake_env.ERA_IMAGES` 会把这个年代排到 windows-2022 |
+| `fatal: Remote branch <版本> not found in upstream origin` | 快照取在发布 commit 之前，配方里还没有这个版本 → `recipefix.declare_version` 会补上 |
 | 下载全失败 | 先确认 `gh`/`curl` 能直连；本机可显式 `BUILDCACHE_PROXY` |
 | clang-cl 工程没命中缓存 | 先确认 `set_toolchains("clang-cl")` 写在 xmake.lua 里（命令行 `--toolchain=` 不触发选择）；再看 build 日志里的 `alias skipped ...`：头文件包/宿主工具包本来就不需要别名，重算 hash 与产物不符则说明拿来重算的配方或 configs 不是产出该产物的那一份 |

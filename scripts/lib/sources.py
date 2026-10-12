@@ -63,9 +63,11 @@ def prepare(
                 util.log(f"  {path} kept at {age[:12]} (the project's own recipe)")
         for note in recipefix.apply_fixups(config, name, dest):
             util.log(note)
-        for note in recipefix.plugin_repair(config, plugin, name, dest):
+        for note in recipefix.plugin_repairs(config, plugin, name, dest):
             util.log(note)
         for note in recipefix.normalize_tree(dest):
+            util.log(note)
+        for note in recipefix.backfill_commits(dest):
             util.log(note)
         prepared[name] = (dest, commit)
 
