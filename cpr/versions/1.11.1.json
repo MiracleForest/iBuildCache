@@ -1,63 +1,65 @@
 {
   "package": "cpr",
   "version": "1.11.1",
-  "built_at": "2026-10-12T12:37:43Z",
-  "xmake_version": "2.9.8",
+  "built_at": "2026-10-12T14:39:14Z",
+  "xmake_version": "3.1.1",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.1.0",
+  "produced_for": "levilamina@26.51.7",
   "entries": {
     "default": {
       "package": "cpr",
       "version": "1.11.1",
-      "built_at": "2026-10-12T12:37:43Z",
-      "xmake_version": "2.9.8",
+      "built_at": "2026-10-12T14:39:14Z",
+      "xmake_version": "3.1.1",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.1.0",
+      "produced_for": "levilamina@26.51.7",
       "artifacts": [
         {
           "package": "cpr",
           "version": "1.11.1",
-          "buildhash": "5cebf81912a24150a7cee397e51c88c9",
-          "key": "windows-x64-vc-5cebf81912a24150a7cee397e51c88c9",
-          "toolset": "14.44.35207",
+          "buildhash": "1c9ad4a4e04341219556b734b3fdce5d",
+          "key": "windows-x64-vc-1c9ad4a4e04341219556b734b3fdce5d",
+          "toolset": "14.51.36231",
           "release": "cpr_0",
-          "asset": "cpr-5cebf81912a24150a7cee397e51c88c9.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/cpr_0/cpr-5cebf81912a24150a7cee397e51c88c9.7z",
-          "sha256": "313f63232defbd1bfaa8a7b0231ff012afe431cac095d44cb8c374adf0778a72",
-          "size": 528757,
+          "asset": "cpr-1c9ad4a4e04341219556b734b3fdce5d.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/cpr_0/cpr-1c9ad4a4e04341219556b734b3fdce5d.7z",
+          "sha256": "d7d14cad1126fcaa411a9a27df1adb3915419d4c82bf51abf88eb8e3c4462314",
+          "size": 524008,
           "container": "7z",
           "aliases": [
             {
               "id": "msvc",
               "toolchain": "msvc",
-              "buildhash": "d4761bd3c00548eea56571ff620a33aa",
-              "key": "windows-x64-vc-d4761bd3c00548eea56571ff620a33aa",
-              "toolset": "14.44.35207"
+              "buildhash": "3a95096e5c70467fbd5a5d8585343423",
+              "key": "windows-x64-vc-3a95096e5c70467fbd5a5d8585343423",
+              "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
-              "buildhash": "e4a3ddd17af24c858bd178be62212ead",
-              "key": "windows-x64-vc-e4a3ddd17af24c858bd178be62212ead",
-              "toolset": "14.44.35207"
+              "buildhash": "595dddd1bb5443de92a1c339a160d7b8",
+              "key": "windows-x64-vc-595dddd1bb5443de92a1c339a160d7b8",
+              "toolset": "14.51.36231"
             }
           ]
         }

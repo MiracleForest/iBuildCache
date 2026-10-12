@@ -1,7 +1,7 @@
 {
   "package": "mimalloc",
   "version": "v3.5.3",
-  "built_at": "2026-10-12T12:25:26Z",
+  "built_at": "2026-10-12T14:39:03Z",
   "xmake_version": "2.8.9",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
@@ -13,12 +13,12 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.11.1",
+  "produced_for": "levilamina@0.10.2",
   "entries": {
     "default": {
       "package": "mimalloc",
       "version": "v3.5.3",
-      "built_at": "2026-10-12T12:25:26Z",
+      "built_at": "2026-10-12T14:39:03Z",
       "xmake_version": "2.8.9",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.11.1",
+      "produced_for": "levilamina@0.10.2",
       "artifacts": [
         {
           "package": "mimalloc",
@@ -41,8 +41,8 @@
           "release": "mimalloc_0",
           "asset": "mimalloc-46ec54dd8e614c4a95aa6309002acd20.7z",
           "url": "https://github.com/MiracleForest/iBuildCache/releases/download/mimalloc_0/mimalloc-46ec54dd8e614c4a95aa6309002acd20.7z",
-          "sha256": "0041d8fbd043a851a13756bd6c54ab8044d7e16609ebe7c366aae26ac9f4d34a",
-          "size": 215343,
+          "sha256": "fedca2e43fef55c84685a52e6b214b56422ac074997c801c1448859604410ce8",
+          "size": 215358,
           "container": "7z",
           "aliases": [
             {
