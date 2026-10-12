@@ -1,8 +1,8 @@
 {
   "package": "fmt",
   "version": "10.2.1",
-  "built_at": "2026-10-12T10:33:39Z",
-  "xmake_version": "2.9.8",
+  "built_at": "2026-10-12T11:57:40Z",
+  "xmake_version": "2.9.1",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "bsci@0.1.6",
+  "produced_for": "bsci@0.1.3",
   "entries": {
     "default": {
       "package": "fmt",
       "version": "10.2.1",
-      "built_at": "2026-10-12T10:33:39Z",
-      "xmake_version": "2.9.8",
+      "built_at": "2026-10-12T11:57:40Z",
+      "xmake_version": "2.9.1",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,8 +30,37 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "bsci@0.1.6",
+      "produced_for": "bsci@0.1.3",
       "artifacts": [
+        {
+          "package": "fmt",
+          "version": "10.2.1",
+          "buildhash": "0172d111723b4d27b9d807e5307d370f",
+          "key": "windows-x64-vc-0172d111723b4d27b9d807e5307d370f",
+          "toolset": "14.44.35207",
+          "release": "fmt_0",
+          "asset": "fmt-0172d111723b4d27b9d807e5307d370f.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/fmt_0/fmt-0172d111723b4d27b9d807e5307d370f.7z",
+          "sha256": "52173db53ebdc5de8b2779d86cc7b27ed87122350714c228d991de7a18f5478c",
+          "size": 222321,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "24ada91b3497424f906c6d5be872b22f",
+              "key": "windows-x64-vc-24ada91b3497424f906c6d5be872b22f",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "22d6d50389ce4c1499668135f888f261",
+              "key": "windows-x64-vc-22d6d50389ce4c1499668135f888f261",
+              "toolset": "14.44.35207"
+            }
+          ]
+        },
         {
           "package": "fmt",
           "version": "10.2.1",

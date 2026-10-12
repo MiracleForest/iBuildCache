@@ -1,0 +1,67 @@
+{
+  "package": "levilamina",
+  "version": "0.12.3",
+  "built_at": "2026-10-12T11:57:40Z",
+  "xmake_version": "2.9.1",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "bsci@0.1.3",
+  "entries": {
+    "server": {
+      "package": "levilamina",
+      "version": "0.12.3",
+      "built_at": "2026-10-12T11:57:40Z",
+      "xmake_version": "2.9.1",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "bsci@0.1.3",
+      "artifacts": [
+        {
+          "package": "levilamina",
+          "version": "0.12.3",
+          "buildhash": "ae0bd1b81006498ca7814bd096b3d9d7",
+          "key": "windows-x64-vc-ae0bd1b81006498ca7814bd096b3d9d7",
+          "toolset": "14.44.35207",
+          "release": "levilamina_0",
+          "asset": "levilamina-ae0bd1b81006498ca7814bd096b3d9d7.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/levilamina_0/levilamina-ae0bd1b81006498ca7814bd096b3d9d7.7z",
+          "sha256": "a92f63365c8863342fd97c3d18dfcb213ebc9deff98af14ad530ba4d666d18c6",
+          "size": 8899786,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "cb5b9ecaf06e4ae3966a36539391b4f6",
+              "key": "windows-x64-vc-cb5b9ecaf06e4ae3966a36539391b4f6",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "3042c9f8a95d4b39a6a67418e0e74180",
+              "key": "windows-x64-vc-3042c9f8a95d4b39a6a67418e0e74180",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "package": "snappy",
+  "version": "1.1.10",
+  "built_at": "2026-10-12T11:57:40Z",
+  "xmake_version": "2.9.1",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "bsci@0.1.3",
+  "entries": {
+    "default": {
+      "package": "snappy",
+      "version": "1.1.10",
+      "built_at": "2026-10-12T11:57:40Z",
+      "xmake_version": "2.9.1",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "bsci@0.1.3",
+      "artifacts": [
+        {
+          "package": "snappy",
+          "version": "1.1.10",
+          "buildhash": "e45a9f0e551f4f9d8daab8a8138033d1",
+          "key": "windows-x64-vc-e45a9f0e551f4f9d8daab8a8138033d1",
+          "toolset": "14.44.35207",
+          "release": "snappy_0",
+          "asset": "snappy-e45a9f0e551f4f9d8daab8a8138033d1.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/snappy_0/snappy-e45a9f0e551f4f9d8daab8a8138033d1.7z",
+          "sha256": "05543dac83960d6f2528c57ca24a187f43b675d723a97a638bce1883634bdeb4",
+          "size": 35439,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "3c08347e460f40eabbe1c42e1b4dfc9e",
+              "key": "windows-x64-vc-3c08347e460f40eabbe1c42e1b4dfc9e",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "2fe87b279877473fb83a8b8e35ecc37c",
+              "key": "windows-x64-vc-2fe87b279877473fb83a8b8e35ecc37c",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
