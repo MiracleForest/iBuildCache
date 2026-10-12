@@ -1,36 +1,36 @@
 {
   "package": "fmt",
   "version": "11.2.0",
-  "built_at": "2026-10-12T01:02:52Z",
-  "xmake_version": "3.0.8",
+  "built_at": "2026-10-12T10:29:17Z",
+  "xmake_version": "3.0.2",
   "toolchain": "msvc",
-  "vs_toolset": "14.51.36231",
+  "vs_toolset": "14.44.35207",
   "revision": 5,
   "configs": {
-    "target_type": "client"
+    "target_type": "server"
   },
   "alias_profiles": [
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "bsci@0.3.0",
+  "produced_for": "bsci@0.1.7",
   "entries": {
     "default": {
       "package": "fmt",
       "version": "11.2.0",
-      "built_at": "2026-10-12T01:02:52Z",
-      "xmake_version": "3.0.8",
+      "built_at": "2026-10-12T10:29:17Z",
+      "xmake_version": "3.0.2",
       "toolchain": "msvc",
-      "vs_toolset": "14.51.36231",
+      "vs_toolset": "14.44.35207",
       "revision": 5,
       "configs": {
-        "target_type": "client"
+        "target_type": "server"
       },
       "alias_profiles": [
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "bsci@0.3.0",
+      "produced_for": "bsci@0.1.7",
       "artifacts": [
         {
           "package": "fmt",
