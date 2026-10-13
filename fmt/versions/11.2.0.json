@@ -1,8 +1,8 @@
 {
   "package": "fmt",
   "version": "11.2.0",
-  "built_at": "2026-10-13T17:20:00Z",
-  "xmake_version": "3.0.5",
+  "built_at": "2026-10-13T22:09:45Z",
+  "xmake_version": "3.0.4",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.7.7",
+  "produced_for": "levilamina@1.7.5",
   "entries": {
     "default": {
       "package": "fmt",
       "version": "11.2.0",
-      "built_at": "2026-10-13T17:20:00Z",
-      "xmake_version": "3.0.5",
+      "built_at": "2026-10-13T22:09:45Z",
+      "xmake_version": "3.0.4",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.7.7",
+      "produced_for": "levilamina@1.7.5",
       "artifacts": [
         {
           "package": "fmt",

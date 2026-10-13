@@ -1,7 +1,7 @@
 {
   "package": "symbolprovider",
   "version": "v1.3.0",
-  "built_at": "2026-10-13T17:22:11Z",
+  "built_at": "2026-10-13T22:10:39Z",
   "xmake_version": "3.0.9",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
@@ -14,12 +14,12 @@
     "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@26.20.6",
+  "produced_for": "levilamina@26.20.3",
   "entries": {
     "default": {
       "package": "symbolprovider",
       "version": "v1.3.0",
-      "built_at": "2026-10-13T17:22:11Z",
+      "built_at": "2026-10-13T22:10:39Z",
       "xmake_version": "3.0.9",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
@@ -32,7 +32,7 @@
         "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@26.20.6",
+      "produced_for": "levilamina@26.20.3",
       "artifacts": [
         {
           "package": "symbolprovider",
