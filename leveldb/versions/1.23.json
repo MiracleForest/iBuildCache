@@ -1,50 +1,77 @@
 {
   "package": "leveldb",
   "version": "1.23",
-  "built_at": "2026-10-13T08:46:23Z",
-  "xmake_version": "3.1.1",
+  "built_at": "2026-10-13T10:17:37Z",
+  "xmake_version": "2.8.6",
   "toolchain": "msvc",
-  "vs_toolset": "14.51.36231",
+  "vs_toolset": "14.44.35207",
   "revision": 5,
   "configs": {
-    "target_type": "client"
+    "target_type": "server"
   },
   "alias_profiles": [
-    "msvc",
-    "clang-cl"
+    "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@26.40.5",
+  "produced_for": "levilamina@0.8.3",
   "entries": {
     "default": {
       "package": "leveldb",
       "version": "1.23",
-      "built_at": "2026-10-13T08:46:23Z",
-      "xmake_version": "3.1.1",
+      "built_at": "2026-10-13T10:17:37Z",
+      "xmake_version": "2.8.6",
       "toolchain": "msvc",
-      "vs_toolset": "14.51.36231",
+      "vs_toolset": "14.44.35207",
       "revision": 5,
       "configs": {
-        "target_type": "client"
+        "target_type": "server"
       },
       "alias_profiles": [
-        "msvc",
-        "clang-cl"
+        "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@26.40.5",
+      "produced_for": "levilamina@0.8.3",
       "artifacts": [
+        {
+          "package": "leveldb",
+          "version": "1.23",
+          "buildhash": "e75a071b4bcf4c7ba6ed1d50ed645b69",
+          "key": "windows-x64-vc-e75a071b4bcf4c7ba6ed1d50ed645b69",
+          "toolset": "14.44.35207",
+          "release": "leveldb_0",
+          "asset": "leveldb-e75a071b4bcf4c7ba6ed1d50ed645b69-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/leveldb_0/leveldb-e75a071b4bcf4c7ba6ed1d50ed645b69-vc1444.7z",
+          "sha256": "e31eed1ba0234c6e85acb2d3e5c51c81400c3913dcab31226b6216ed571cc355",
+          "size": 266738,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "a6da4b3d885d4c15a70a1089cedc734d",
+              "key": "windows-x64-vc-a6da4b3d885d4c15a70a1089cedc734d",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "de1fecabe82d44a2b1b743df26efbc5d",
+              "key": "windows-x64-vc-de1fecabe82d44a2b1b743df26efbc5d",
+              "toolset": "14.44.35207"
+            }
+          ]
+        },
         {
           "package": "leveldb",
           "version": "1.23",
           "buildhash": "2532d000dc9d47cbb618c80ba0e6d806",
           "key": "windows-x64-vc-2532d000dc9d47cbb618c80ba0e6d806",
-          "toolset": "14.51.36231",
+          "toolset": "14.44.35207",
           "release": "leveldb_0",
-          "asset": "leveldb-2532d000dc9d47cbb618c80ba0e6d806.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/leveldb_0/leveldb-2532d000dc9d47cbb618c80ba0e6d806.7z",
-          "sha256": "4481cc2d0a283e770ed08659591df1346d9e60295a186e355b60a00edf46eaae",
-          "size": 445142,
+          "asset": "leveldb-2532d000dc9d47cbb618c80ba0e6d806-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/leveldb_0/leveldb-2532d000dc9d47cbb618c80ba0e6d806-vc1444.7z",
+          "sha256": "29f7adfe47f69b9a856f3b78679ed8cdabd6253677203c23786c6fcc2ef153f6",
+          "size": 285451,
           "container": "7z",
           "aliases": [
             {
@@ -52,14 +79,14 @@
               "toolchain": "msvc",
               "buildhash": "562d97fa461941deaa4ae4ca06492415",
               "key": "windows-x64-vc-562d97fa461941deaa4ae4ca06492415",
-              "toolset": "14.51.36231"
+              "toolset": "14.44.35207"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
               "buildhash": "47e59e56afbe44f79ec7388e60e8ab6e",
               "key": "windows-x64-vc-47e59e56afbe44f79ec7388e60e8ab6e",
-              "toolset": "14.51.36231"
+              "toolset": "14.44.35207"
             }
           ]
         }

@@ -1,36 +1,32 @@
 {
   "package": "bdslibrary",
   "version": "1.20.81-r01",
-  "built_at": "2026-10-13T01:56:39Z",
+  "built_at": "2026-10-13T10:21:33Z",
   "xmake_version": "2.9.7",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
-  "configs": {
-    "target_type": "server"
-  },
+  "configs": {},
   "alias_profiles": [
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.12.4",
+  "produced_for": "more-dimensions@0.3.1",
   "entries": {
     "default": {
       "package": "bdslibrary",
       "version": "1.20.81-r01",
-      "built_at": "2026-10-13T01:56:39Z",
+      "built_at": "2026-10-13T10:21:33Z",
       "xmake_version": "2.9.7",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
-      "configs": {
-        "target_type": "server"
-      },
+      "configs": {},
       "alias_profiles": [
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.12.4",
+      "produced_for": "more-dimensions@0.3.1",
       "artifacts": [
         {
           "package": "bdslibrary",
