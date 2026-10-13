@@ -1,38 +1,36 @@
 {
   "package": "mimalloc",
   "version": "v2.1.7",
-  "built_at": "2026-10-13T10:36:04Z",
-  "xmake_version": "3.0.9",
+  "built_at": "2026-10-13T17:20:00Z",
+  "xmake_version": "3.0.5",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
   "configs": {
-    "target_type": "client"
+    "target_type": "server"
   },
   "alias_profiles": [
-    "msvc",
-    "clang-cl"
+    "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@26.20.4",
+  "produced_for": "levilamina@1.7.7",
   "entries": {
     "default": {
       "package": "mimalloc",
       "version": "v2.1.7",
-      "built_at": "2026-10-13T10:36:04Z",
-      "xmake_version": "3.0.9",
+      "built_at": "2026-10-13T17:20:00Z",
+      "xmake_version": "3.0.5",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
       "configs": {
-        "target_type": "client"
+        "target_type": "server"
       },
       "alias_profiles": [
-        "msvc",
-        "clang-cl"
+        "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@26.20.4",
+      "produced_for": "levilamina@1.7.7",
       "artifacts": [
         {
           "package": "mimalloc",
