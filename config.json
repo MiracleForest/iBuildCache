@@ -106,6 +106,9 @@
         "upstream_repo": "LiteLDev/MoreDimensions",
         "recipe_source": "levimc-repo",
         "recipe_package": "more-dimensions",
+        "legacyRecipeNames": [
+          "moredimensions"
+        ],
         "recipeEdits": [
           {
             "find": "import(\"package.tools.*make\")",
