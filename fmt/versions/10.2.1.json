@@ -1,7 +1,7 @@
 {
   "package": "fmt",
   "version": "10.2.1",
-  "built_at": "2026-10-12T19:35:12Z",
+  "built_at": "2026-10-13T01:56:39Z",
   "xmake_version": "2.9.7",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
@@ -13,12 +13,12 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.13.4",
+  "produced_for": "levilamina@0.12.4",
   "entries": {
     "default": {
       "package": "fmt",
       "version": "10.2.1",
-      "built_at": "2026-10-12T19:35:12Z",
+      "built_at": "2026-10-13T01:56:39Z",
       "xmake_version": "2.9.7",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
@@ -30,62 +30,33 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.13.4",
+      "produced_for": "levilamina@0.12.4",
       "artifacts": [
         {
           "package": "fmt",
           "version": "10.2.1",
-          "buildhash": "2eeacf73125546e1ae5a2a161567d6e6",
-          "key": "windows-x64-vc-2eeacf73125546e1ae5a2a161567d6e6",
-          "toolset": "14.51.36231",
-          "release": "fmt_0",
-          "asset": "fmt-2eeacf73125546e1ae5a2a161567d6e6.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/fmt_0/fmt-2eeacf73125546e1ae5a2a161567d6e6.7z",
-          "sha256": "3a40dc2e5e5736a736dc53bead8baf4f42db346f886afaa30e6f5647197b971c",
-          "size": 233522,
-          "container": "7z",
-          "aliases": [
-            {
-              "id": "msvc",
-              "toolchain": "msvc",
-              "buildhash": "6e3cc9bad88841e8ac868247cbaab2b8",
-              "key": "windows-x64-vc-6e3cc9bad88841e8ac868247cbaab2b8",
-              "toolset": "14.51.36231"
-            },
-            {
-              "id": "clang-cl",
-              "toolchain": "clang-cl",
-              "buildhash": "9c27c303fd4941f7b2c5019d4abc5fa5",
-              "key": "windows-x64-vc-9c27c303fd4941f7b2c5019d4abc5fa5",
-              "toolset": "14.51.36231"
-            }
-          ]
-        },
-        {
-          "package": "fmt",
-          "version": "10.2.1",
-          "buildhash": "2e50b5cfa2454b0db55b8f81988b5373",
-          "key": "windows-x64-vc-2e50b5cfa2454b0db55b8f81988b5373",
+          "buildhash": "0172d111723b4d27b9d807e5307d370f",
+          "key": "windows-x64-vc-0172d111723b4d27b9d807e5307d370f",
           "toolset": "14.44.35207",
           "release": "fmt_0",
-          "asset": "fmt-2e50b5cfa2454b0db55b8f81988b5373.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/fmt_0/fmt-2e50b5cfa2454b0db55b8f81988b5373.7z",
-          "sha256": "508522ff4c785fce78667a7444b5b4b197c28044a1324be1a98552f00b8efb61",
-          "size": 233345,
+          "asset": "fmt-0172d111723b4d27b9d807e5307d370f.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/fmt_0/fmt-0172d111723b4d27b9d807e5307d370f.7z",
+          "sha256": "1c586e19adaa598d1a4be18c2965e401bb1873b902ff4f03b0013f8130559287",
+          "size": 233330,
           "container": "7z",
           "aliases": [
             {
               "id": "msvc",
               "toolchain": "msvc",
-              "buildhash": "416ad8fc2b694f6da2af4748b4322115",
-              "key": "windows-x64-vc-416ad8fc2b694f6da2af4748b4322115",
+              "buildhash": "24ada91b3497424f906c6d5be872b22f",
+              "key": "windows-x64-vc-24ada91b3497424f906c6d5be872b22f",
               "toolset": "14.44.35207"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
-              "buildhash": "1f18080e6aa1473281a3ad43a1834c08",
-              "key": "windows-x64-vc-1f18080e6aa1473281a3ad43a1834c08",
+              "buildhash": "22d6d50389ce4c1499668135f888f261",
+              "key": "windows-x64-vc-22d6d50389ce4c1499668135f888f261",
               "toolset": "14.44.35207"
             }
           ]

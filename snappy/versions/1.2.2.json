@@ -1,36 +1,38 @@
 {
   "package": "snappy",
   "version": "1.2.2",
-  "built_at": "2026-10-12T19:35:12Z",
-  "xmake_version": "2.9.7",
+  "built_at": "2026-10-13T01:49:31Z",
+  "xmake_version": "3.1.1",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.13.4",
+  "produced_for": "levilamina@26.40.2",
   "entries": {
     "default": {
       "package": "snappy",
       "version": "1.2.2",
-      "built_at": "2026-10-12T19:35:12Z",
-      "xmake_version": "2.9.7",
+      "built_at": "2026-10-13T01:49:31Z",
+      "xmake_version": "3.1.1",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.13.4",
+      "produced_for": "levilamina@26.40.2",
       "artifacts": [
         {
           "package": "snappy",
