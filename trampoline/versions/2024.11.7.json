@@ -1,8 +1,8 @@
 {
   "package": "trampoline",
   "version": "2024.11.7",
-  "built_at": "2026-10-15T02:08:53Z",
-  "xmake_version": "3.0.7",
+  "built_at": "2026-10-15T07:07:04Z",
+  "xmake_version": "3.0.6",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.9.7",
+  "produced_for": "levilamina@1.9.1",
   "entries": {
     "default": {
       "package": "trampoline",
       "version": "2024.11.7",
-      "built_at": "2026-10-15T02:08:53Z",
-      "xmake_version": "3.0.7",
+      "built_at": "2026-10-15T07:07:04Z",
+      "xmake_version": "3.0.6",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.9.7",
+      "produced_for": "levilamina@1.9.1",
       "artifacts": [
         {
           "package": "trampoline",
