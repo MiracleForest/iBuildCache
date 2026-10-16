@@ -1,0 +1,140 @@
+{
+  "plugin": "ll",
+  "package": "levilamina",
+  "version": "26.10.14",
+  "entry": "server",
+  "configs": {
+    "target_type": "server"
+  },
+  "revision": 5,
+  "upstream_commit": "425a0f6ab95f908f8787b33550ae3a0dbe1cc0e1",
+  "xmake_version": "3.0.9",
+  "toolchain": "msvc",
+  "upstream_toolchain": "msvc",
+  "alias_profiles": [
+    "msvc"
+  ],
+  "vs_toolset": "14.44.35207",
+  "recipe_commits": {
+    "levimc-repo": "56f390b260799fe11e1aee0745c2f3777943d40a",
+    "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+    "xmake-repo": "88f360d1006923f0a60eea5e09f2ca81ac40f4fb"
+  },
+  "platform": {
+    "plat": "windows",
+    "arch": "x64",
+    "mode": "release"
+  },
+  "built_at": "2026-10-16T19:14:18Z",
+  "compiled_with": "msvc",
+  "entries": {
+    "client": {
+      "plugin": "ll",
+      "package": "levilamina",
+      "version": "26.10.14",
+      "entry": "client",
+      "configs": {
+        "target_type": "client"
+      },
+      "revision": 5,
+      "upstream_commit": "425a0f6ab95f908f8787b33550ae3a0dbe1cc0e1",
+      "xmake_version": "3.0.9",
+      "toolchain": "msvc",
+      "upstream_toolchain": "msvc",
+      "alias_profiles": [
+        "msvc"
+      ],
+      "vs_toolset": "14.44.35207",
+      "recipe_commits": {
+        "levimc-repo": "56f390b260799fe11e1aee0745c2f3777943d40a",
+        "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+        "xmake-repo": "88f360d1006923f0a60eea5e09f2ca81ac40f4fb"
+      },
+      "platform": {
+        "plat": "windows",
+        "arch": "x64",
+        "mode": "release"
+      },
+      "built_at": "2026-10-16T19:14:48Z",
+      "artifacts": [
+        {
+          "package": "levilamina",
+          "version": "26.10.14",
+          "buildhash": "b57e243a3cf840c3b7c4979fb53cb5b4",
+          "key": "windows-x64-vc-b57e243a3cf840c3b7c4979fb53cb5b4",
+          "toolset": "14.44.35207",
+          "release": "levilamina_0",
+          "asset": "levilamina-b57e243a3cf840c3b7c4979fb53cb5b4-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/levilamina_0/levilamina-b57e243a3cf840c3b7c4979fb53cb5b4-vc1444.7z",
+          "sha256": "301d5cf1f8a75930b02aed2c67ca3c7ff8898b5a7127f033c6ffcf555844f900",
+          "size": 25159197,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "6bbbb1aeabed4c51936f539ab3be14b8",
+              "key": "windows-x64-vc-6bbbb1aeabed4c51936f539ab3be14b8",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ],
+      "compiled_with": "msvc"
+    },
+    "server": {
+      "plugin": "ll",
+      "package": "levilamina",
+      "version": "26.10.14",
+      "entry": "server",
+      "configs": {
+        "target_type": "server"
+      },
+      "revision": 5,
+      "upstream_commit": "425a0f6ab95f908f8787b33550ae3a0dbe1cc0e1",
+      "xmake_version": "3.0.9",
+      "toolchain": "msvc",
+      "upstream_toolchain": "msvc",
+      "alias_profiles": [
+        "msvc"
+      ],
+      "vs_toolset": "14.44.35207",
+      "recipe_commits": {
+        "levimc-repo": "56f390b260799fe11e1aee0745c2f3777943d40a",
+        "oeotyan-repo": "f582a823b89d34c27daa51083c42023ee7cd0125",
+        "xmake-repo": "88f360d1006923f0a60eea5e09f2ca81ac40f4fb"
+      },
+      "platform": {
+        "plat": "windows",
+        "arch": "x64",
+        "mode": "release"
+      },
+      "built_at": "2026-10-16T19:14:18Z",
+      "artifacts": [
+        {
+          "package": "levilamina",
+          "version": "26.10.14",
+          "buildhash": "5f7f8e428a9647a6bfc555d148970d47",
+          "key": "windows-x64-vc-5f7f8e428a9647a6bfc555d148970d47",
+          "toolset": "14.44.35207",
+          "release": "levilamina_0",
+          "asset": "levilamina-5f7f8e428a9647a6bfc555d148970d47-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/levilamina_0/levilamina-5f7f8e428a9647a6bfc555d148970d47-vc1444.7z",
+          "sha256": "8a8de8a326e2cf9894255424cecc7fefe3feee6abc0605b32ebb056bcdcd57a7",
+          "size": 24519990,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "19d79edc59984a308e3c98a2e330629f",
+              "key": "windows-x64-vc-19d79edc59984a308e3c98a2e330629f",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ],
+      "compiled_with": "msvc"
+    }
+  }
+}
