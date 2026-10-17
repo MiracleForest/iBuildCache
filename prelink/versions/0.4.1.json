@@ -1,0 +1,52 @@
+{
+  "package": "prelink",
+  "version": "0.4.1",
+  "built_at": "2026-10-17T20:21:57Z",
+  "xmake_version": "2.9.9",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@1.2.0-rc.1",
+  "entries": {
+    "default": {
+      "package": "prelink",
+      "version": "0.4.1",
+      "built_at": "2026-10-17T20:21:57Z",
+      "xmake_version": "2.9.9",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@1.2.0-rc.1",
+      "artifacts": [
+        {
+          "package": "prelink",
+          "version": "0.4.1",
+          "buildhash": "191b5d1acd334123a9191995c4886b4f",
+          "key": "windows-x64-vc-191b5d1acd334123a9191995c4886b4f",
+          "toolset": "14.44.35207",
+          "release": "prelink_0",
+          "asset": "prelink-191b5d1acd334123a9191995c4886b4f-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/prelink_0/prelink-191b5d1acd334123a9191995c4886b4f-vc1444.7z",
+          "sha256": "c89c9d25eb74b99bffed18f99e2cc4302a613b414e2d1f288014382ff1b7fc0a",
+          "size": 1148053,
+          "container": "7z",
+          "aliases": []
+        }
+      ]
+    }
+  }
+}
