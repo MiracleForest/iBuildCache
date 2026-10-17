@@ -1,0 +1,67 @@
+{
+  "package": "preloader",
+  "version": "v1.14.1",
+  "built_at": "2026-10-17T14:40:26Z",
+  "xmake_version": "2.9.9",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@1.2.0-rc.2",
+  "entries": {
+    "default": {
+      "package": "preloader",
+      "version": "v1.14.1",
+      "built_at": "2026-10-17T14:40:26Z",
+      "xmake_version": "2.9.9",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@1.2.0-rc.2",
+      "artifacts": [
+        {
+          "package": "preloader",
+          "version": "v1.14.1",
+          "buildhash": "2f2d03d6a28c40aa91a7bfb890d9978e",
+          "key": "windows-x64-vc-2f2d03d6a28c40aa91a7bfb890d9978e",
+          "toolset": "14.44.35207",
+          "release": "preloader_0",
+          "asset": "preloader-2f2d03d6a28c40aa91a7bfb890d9978e-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/preloader_0/preloader-2f2d03d6a28c40aa91a7bfb890d9978e-vc1444.7z",
+          "sha256": "8a89492356d02b7367fc3d755d33c2538a2a7bf305c88fb3e05f32fa462ef493",
+          "size": 753487,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "1de73154e7724690acfe99183ccee45e",
+              "key": "windows-x64-vc-1de73154e7724690acfe99183ccee45e",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "73e2ec11aee2495bb032490d63f0587a",
+              "key": "windows-x64-vc-73e2ec11aee2495bb032490d63f0587a",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
