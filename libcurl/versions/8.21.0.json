@@ -1,8 +1,8 @@
 {
   "package": "libcurl",
   "version": "8.21.0",
-  "built_at": "2026-10-17T20:21:57Z",
-  "xmake_version": "2.9.9",
+  "built_at": "2026-10-17T23:51:49Z",
+  "xmake_version": "2.9.7",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.2.0-rc.1",
+  "produced_for": "levilamina@1.0.0-rc.2",
   "entries": {
     "default": {
       "package": "libcurl",
       "version": "8.21.0",
-      "built_at": "2026-10-17T20:21:57Z",
-      "xmake_version": "2.9.9",
+      "built_at": "2026-10-17T23:51:49Z",
+      "xmake_version": "2.9.7",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.2.0-rc.1",
+      "produced_for": "levilamina@1.0.0-rc.2",
       "artifacts": [
         {
           "package": "libcurl",
@@ -41,8 +41,8 @@
           "release": "libcurl_0",
           "asset": "libcurl-917c16ddbf2942d1ae0e099942006c5b-vc1444.7z",
           "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libcurl_0/libcurl-917c16ddbf2942d1ae0e099942006c5b-vc1444.7z",
-          "sha256": "a79e90744ba25b2c564d93fbc971b905a74ac22f87b2f60b33f691bd4bb5a67e",
-          "size": 1397594,
+          "sha256": "d6c25cf4862bef656faf079eda66c17b0a818e999187d82a4d618f5b7beffcf6",
+          "size": 1397560,
           "container": "7z",
           "aliases": [
             {
