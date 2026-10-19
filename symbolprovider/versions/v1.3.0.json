@@ -1,8 +1,8 @@
 {
   "package": "symbolprovider",
   "version": "v1.3.0",
-  "built_at": "2026-10-19T02:13:22Z",
-  "xmake_version": "2.9.7",
+  "built_at": "2026-10-19T07:26:32Z",
+  "xmake_version": "2.8.9",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.12.0",
+  "produced_for": "levilamina@0.11.0",
   "entries": {
     "default": {
       "package": "symbolprovider",
       "version": "v1.3.0",
-      "built_at": "2026-10-19T02:13:22Z",
-      "xmake_version": "2.9.7",
+      "built_at": "2026-10-19T07:26:32Z",
+      "xmake_version": "2.8.9",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.12.0",
+      "produced_for": "levilamina@0.11.0",
       "artifacts": [
         {
           "package": "symbolprovider",
@@ -41,8 +41,8 @@
           "release": "symbolprovider_0",
           "asset": "symbolprovider-8ef9d781a7854895b90a561f7f9be0ea-vc1444.7z",
           "url": "https://github.com/MiracleForest/iBuildCache/releases/download/symbolprovider_0/symbolprovider-8ef9d781a7854895b90a561f7f9be0ea-vc1444.7z",
-          "sha256": "a85e57eb0e2c52fb84d5837cd3449b5b1f31e383cd027319bc43a63883a35e1d",
-          "size": 5056,
+          "sha256": "941a9e422ff7f2dccf03728a8de0230bd9774a5f80cbda9246643d096f02f4d6",
+          "size": 5055,
           "container": "7z",
           "aliases": [
             {
