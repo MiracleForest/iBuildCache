@@ -1,0 +1,67 @@
+{
+  "package": "preloader",
+  "version": "v1.6.1",
+  "built_at": "2026-10-19T15:15:59Z",
+  "xmake_version": "2.8.9",
+  "toolchain": "msvc",
+  "vs_toolset": "14.44.35207",
+  "revision": 5,
+  "configs": {
+    "target_type": "server"
+  },
+  "alias_profiles": [
+    "msvc"
+  ],
+  "compiled_with": "msvc",
+  "produced_for": "levilamina@0.10.4",
+  "entries": {
+    "default": {
+      "package": "preloader",
+      "version": "v1.6.1",
+      "built_at": "2026-10-19T15:15:59Z",
+      "xmake_version": "2.8.9",
+      "toolchain": "msvc",
+      "vs_toolset": "14.44.35207",
+      "revision": 5,
+      "configs": {
+        "target_type": "server"
+      },
+      "alias_profiles": [
+        "msvc"
+      ],
+      "compiled_with": "msvc",
+      "produced_for": "levilamina@0.10.4",
+      "artifacts": [
+        {
+          "package": "preloader",
+          "version": "v1.6.1",
+          "buildhash": "975c08b73e8e492cad6e099dd6efb7aa",
+          "key": "windows-x64-vc-975c08b73e8e492cad6e099dd6efb7aa",
+          "toolset": "14.44.35207",
+          "release": "preloader_0",
+          "asset": "preloader-975c08b73e8e492cad6e099dd6efb7aa-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/preloader_0/preloader-975c08b73e8e492cad6e099dd6efb7aa-vc1444.7z",
+          "sha256": "062128227727cb5e9f509fc42b9951f6673cf2dd7fb74647855ab293f17e7263",
+          "size": 1181347,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "7554c984dbba4e36b38264dfb450cd2e",
+              "key": "windows-x64-vc-7554c984dbba4e36b38264dfb450cd2e",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "84862046f27b4c1a8239d4d413dd728c",
+              "key": "windows-x64-vc-84862046f27b4c1a8239d4d413dd728c",
+              "toolset": "14.44.35207"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
