@@ -1095,11 +1095,92 @@ def test_a_failed_upload_is_retried(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(gh.util, "run", fake_run)
     monkeypatch.setattr(gh.time, "sleep", lambda _seconds: None)
     monkeypatch.setattr(gh, "ensure_release", lambda *args, **kwargs: None)
+    monkeypatch.setattr(gh, "release_assets", lambda *args, **kwargs: None)
     asset = tmp_path / "fmt.7z"
     asset.write_bytes(b"archive")
 
     gh.upload_asset("owner", "repo", "fmt_0", asset, config=util.load_config())
     assert calls["n"] == 3
+
+
+def test_an_archive_is_never_published_a_second_time(tmp_path: Path, monkeypatch):
+    """The name is the identity, so the first published bytes stay.
+
+    Two builds of one build hash can still differ (another era's xmake, the other
+    half of a round). Clobbering the shard leaves every manifest naming the old
+    checksum until the next finalize -- and a job that fails before finalize never
+    repairs it, which is what a consumer sees as "unmatched checksum".
+    """
+    config = util.load_config()
+    asset = tmp_path / "fmt-ee1902dd7cff4195a287949f80dbce70-vc1444.7z"
+    asset.write_bytes(b"this build")
+    published = {
+        "digest": "sha256:" + "c2" * 32,
+        "size": 1234,
+    }
+    monkeypatch.setattr(
+        gh, "release_assets", lambda *args, **kwargs: {asset.name: published}
+    )
+
+    def never(*args, **kwargs):
+        raise AssertionError("the published archive must not be uploaded again")
+
+    monkeypatch.setattr(gh.util, "run", never)
+
+    found = gh.upload_asset("owner", "repo", "fmt_0", asset, config=config)
+
+    assert found == {"sha256": "c2" * 32, "size": 1234}
+
+    # A revision bump is exactly the case that asks for the new bytes.
+    uploaded = {"n": 0}
+
+    def fake_run(*args, **kwargs):
+        uploaded["n"] += 1
+        return types.SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr(gh.util, "run", fake_run)
+    fresh = gh.upload_asset("owner", "repo", "fmt_0", asset, config=config, replace=True)
+    assert uploaded["n"] == 1
+    assert fresh["sha256"] == util.sha256_file(asset)
+
+
+def test_a_dependency_is_not_re_packed_when_the_ledger_holds_it(tmp_path: Path):
+    """The dependency pass publishes what is missing, not the whole closure again.
+
+    It used to bypass the reuse check, so every round packed and uploaded every
+    shared dependency under names that were already published.
+    """
+    config = dict(util.load_config())
+    config["_index_dir"] = str(tmp_path / "index")
+    config["revision"] = 5
+    ctx = plugins.Context(config)
+    index_store.write_entry(
+        ctx.index_root,
+        "symbolprovider",
+        "v1.3.0",
+        "default",
+        {
+            "package": "symbolprovider",
+            "version": "v1.3.0",
+            "revision": 5,
+            "artifacts": [
+                {
+                    "package": "symbolprovider",
+                    "version": "v1.3.0",
+                    "buildhash": "8ef9d781a7854895b90a561f7f9be0ea",
+                    "key": "windows-x64-vc-8ef9d781a7854895b90a561f7f9be0ea",
+                    "toolset": "14.44.35207",
+                    "url": "https://example.invalid/symbolprovider.7z",
+                    "sha256": "ab" * 32,
+                }
+            ],
+        },
+    )
+    buildhash = "8ef9d781a7854895b90a561f7f9be0ea"
+
+    assert build.cached_artifact(ctx, "symbolprovider", "v1.3.0", buildhash, 5, "14.44.35207")
+    assert build.published_buildhash(ctx, "symbolprovider", "v1.3.0", buildhash) is True
+    assert build.published_buildhash(ctx, "symbolprovider", "v1.3.0", "deadbeef") is False
 
 
 def test_an_artifact_already_published_is_not_packed_again(tmp_path: Path):
@@ -2127,6 +2208,52 @@ def test_repaired_versions_are_renamed_where_the_resolver_reads_them(tmp_path: P
     assert '"bdslibrary 1.21.0-r3"' in (root / "versions" / "0_13_5.lua").read_text(
         encoding="utf-8"
     )
+
+
+def test_a_recipe_that_maps_its_versions_follows_the_rename(tmp_path: Path):
+    """`bedrockdata` maps a version to the `prelink` tool of that release.
+
+    Its ``on_load`` looks the map up with the version string xmake sees, so a
+    four-component version that only got renamed everywhere *except* the map
+    silently loses its dependency: LeviLamina then compiles to 100% and dies in
+    the install step with ``Cannot find prelink.exe``.
+    """
+    ll = next(
+        item for item in plugins.load_all(util.load_config()) if item.name == "ll"
+    )
+    snapshot = tmp_path / "levimc-repo@test"
+    root = snapshot / "packages" / "b" / "bedrockdata"
+    root.mkdir(parents=True)
+    (root / "versions.txt").write_text(
+        "1.21.60.10-server 0123456789abcdef0123456789abcdef01234567\n",
+        encoding="utf-8",
+    )
+    (root / "xmake.lua").write_text(
+        'package("bedrockdata")\n'
+        '    add_urls("https://example.invalid/$(version)/bedrock.zip")\n'
+        '    add_versionfiles("versions.txt")\n'
+        "    local deps = {\n"
+        '        ["1.21.60.10-server"] = {"prelink v0.3.0"},\n'
+        "    }\n"
+        "    on_load(function (package)\n"
+        "        local version = tostring(package:version_str())\n"
+        "        if deps[version] then package:add(\"deps\", deps[version]) end\n"
+        "    end)\n",
+        encoding="utf-8",
+    )
+
+    notes = ll.module._repair_legacy_versions(snapshot)
+
+    assert any("bedrockdata" in note for note in notes), notes
+    repaired = (root / "xmake.lua").read_text(encoding="utf-8")
+    # the map is looked up by the repaired version, so its key has to say so
+    assert '["1.21.60-r10-server"] = {"prelink v0.3.0"}' in repaired
+    assert 'add_versions("legacy0:1.21.60-r10-server"' in repaired
+    # the tag itself stays in the URL, otherwise the release cannot be fetched
+    assert "https://example.invalid/1.21.60.10-server/bedrock.zip" in repaired
+    assert 'add_versions("legacy0:1.21.60-r10-server", "0123456789' in repaired
+    # the renamed version is declared explicitly now, so the listing drops it
+    assert "1.21.60.10-server" not in (root / "versions.txt").read_text(encoding="utf-8")
 
 
 def test_a_declared_recipe_edit_repairs_what_xmake_cannot_import(tmp_path: Path):
