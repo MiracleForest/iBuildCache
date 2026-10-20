@@ -1,8 +1,8 @@
 {
   "package": "mimalloc",
   "version": "v3.5.3",
-  "built_at": "2026-10-20T18:22:25Z",
-  "xmake_version": "2.8.7",
+  "built_at": "2026-10-20T22:54:47Z",
+  "xmake_version": "2.8.6",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.9.1",
+  "produced_for": "levilamina@0.9.0",
   "entries": {
     "default": {
       "package": "mimalloc",
       "version": "v3.5.3",
-      "built_at": "2026-10-20T18:22:25Z",
-      "xmake_version": "2.8.7",
+      "built_at": "2026-10-20T22:54:47Z",
+      "xmake_version": "2.8.6",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,7 +30,7 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.9.1",
+      "produced_for": "levilamina@0.9.0",
       "artifacts": [
         {
           "package": "mimalloc",

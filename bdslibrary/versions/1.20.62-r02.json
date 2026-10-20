@@ -1,8 +1,8 @@
 {
   "package": "bdslibrary",
   "version": "1.20.62-r02",
-  "built_at": "2026-10-20T18:22:25Z",
-  "xmake_version": "2.8.7",
+  "built_at": "2026-10-20T22:54:47Z",
+  "xmake_version": "2.8.6",
   "toolchain": "msvc",
   "vs_toolset": "14.44.35207",
   "revision": 5,
@@ -13,13 +13,13 @@
     "msvc"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.9.1",
+  "produced_for": "levilamina@0.9.0",
   "entries": {
     "default": {
       "package": "bdslibrary",
       "version": "1.20.62-r02",
-      "built_at": "2026-10-20T18:22:25Z",
-      "xmake_version": "2.8.7",
+      "built_at": "2026-10-20T22:54:47Z",
+      "xmake_version": "2.8.6",
       "toolchain": "msvc",
       "vs_toolset": "14.44.35207",
       "revision": 5,
@@ -30,8 +30,37 @@
         "msvc"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.9.1",
+      "produced_for": "levilamina@0.9.0",
       "artifacts": [
+        {
+          "package": "bdslibrary",
+          "version": "1.20.62-r02",
+          "buildhash": "8888ca16a72048b08cf695d3deafc45c",
+          "key": "windows-x64-vc-8888ca16a72048b08cf695d3deafc45c",
+          "toolset": "14.44.35207",
+          "release": "bdslibrary_0",
+          "asset": "bdslibrary-8888ca16a72048b08cf695d3deafc45c-vc1444.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/bdslibrary_0/bdslibrary-8888ca16a72048b08cf695d3deafc45c-vc1444.7z",
+          "sha256": "d75f00942c31e02fef27adeff24bde18090e9102406658c300a2acdc1800f4d1",
+          "size": 10777904,
+          "container": "7z",
+          "aliases": [
+            {
+              "id": "msvc",
+              "toolchain": "msvc",
+              "buildhash": "bf7076f7313c4e7883cf923a4ec84a79",
+              "key": "windows-x64-vc-bf7076f7313c4e7883cf923a4ec84a79",
+              "toolset": "14.44.35207"
+            },
+            {
+              "id": "clang-cl",
+              "toolchain": "clang-cl",
+              "buildhash": "abbaba79cf614920b196760df788d17b",
+              "key": "windows-x64-vc-abbaba79cf614920b196760df788d17b",
+              "toolset": "14.44.35207"
+            }
+          ]
+        },
         {
           "package": "bdslibrary",
           "version": "1.20.62-r02",
