@@ -1,48 +1,50 @@
 {
   "package": "libhat",
   "version": "0.4.0",
-  "built_at": "2026-10-20T13:50:35Z",
-  "xmake_version": "2.9.9",
+  "built_at": "2026-10-27T11:48:31Z",
+  "xmake_version": "3.1.2",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.1.2",
+  "produced_for": "levilamina@26.51.8",
   "entries": {
     "default": {
       "package": "libhat",
       "version": "0.4.0",
-      "built_at": "2026-10-20T13:50:35Z",
-      "xmake_version": "2.9.9",
+      "built_at": "2026-10-27T11:48:31Z",
+      "xmake_version": "3.1.2",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.1.2",
+      "produced_for": "levilamina@26.51.8",
       "artifacts": [
         {
           "package": "libhat",
           "version": "0.4.0",
           "buildhash": "c50fc038e66740e58945ea5327f5be6a",
           "key": "windows-x64-vc-c50fc038e66740e58945ea5327f5be6a",
-          "toolset": "14.44.35207",
+          "toolset": "14.51.36231",
           "release": "libhat_0",
-          "asset": "libhat-c50fc038e66740e58945ea5327f5be6a-vc1444.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libhat_0/libhat-c50fc038e66740e58945ea5327f5be6a-vc1444.7z",
-          "sha256": "2d0b64c91b939eb9012dcf194ce16d671a1db81f77ef2186917293686ba71da1",
-          "size": 89993,
+          "asset": "libhat-c50fc038e66740e58945ea5327f5be6a-vc1451.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libhat_0/libhat-c50fc038e66740e58945ea5327f5be6a-vc1451.7z",
+          "sha256": "c04237165f5c975850e9f222e4183cdf8c93669ffbf15e1853b1feed49fcadc8",
+          "size": 89994,
           "container": "7z",
           "aliases": [
             {
@@ -50,14 +52,14 @@
               "toolchain": "msvc",
               "buildhash": "5bc196abc3ce43048a872ea3801c8b3d",
               "key": "windows-x64-vc-5bc196abc3ce43048a872ea3801c8b3d",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
               "buildhash": "b08e7160ae9441f09e3d0b1ddcb2deea",
               "key": "windows-x64-vc-b08e7160ae9441f09e3d0b1ddcb2deea",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             }
           ]
         }

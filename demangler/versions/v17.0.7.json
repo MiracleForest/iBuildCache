@@ -1,77 +1,50 @@
 {
   "package": "demangler",
   "version": "v17.0.7",
-  "built_at": "2026-10-20T22:54:47Z",
-  "xmake_version": "2.8.6",
+  "built_at": "2026-10-27T11:48:31Z",
+  "xmake_version": "3.1.2",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.9.0",
+  "produced_for": "levilamina@26.51.8",
   "entries": {
     "default": {
       "package": "demangler",
       "version": "v17.0.7",
-      "built_at": "2026-10-20T22:54:47Z",
-      "xmake_version": "2.8.6",
+      "built_at": "2026-10-27T11:48:31Z",
+      "xmake_version": "3.1.2",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.9.0",
+      "produced_for": "levilamina@26.51.8",
       "artifacts": [
-        {
-          "package": "demangler",
-          "version": "v17.0.7",
-          "buildhash": "b2a79211a1ad4cda9f4eab810db284b7",
-          "key": "windows-x64-vc-b2a79211a1ad4cda9f4eab810db284b7",
-          "toolset": "14.44.35207",
-          "release": "demangler_0",
-          "asset": "demangler-b2a79211a1ad4cda9f4eab810db284b7-vc1444.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/demangler_0/demangler-b2a79211a1ad4cda9f4eab810db284b7-vc1444.7z",
-          "sha256": "88f59ae71c995eb7fdec74d8418fb235ec95ec89cff7706da45516317e099d05",
-          "size": 244315,
-          "container": "7z",
-          "aliases": [
-            {
-              "id": "msvc",
-              "toolchain": "msvc",
-              "buildhash": "71f034b6daaf41debd91b4f7136dfad5",
-              "key": "windows-x64-vc-71f034b6daaf41debd91b4f7136dfad5",
-              "toolset": "14.44.35207"
-            },
-            {
-              "id": "clang-cl",
-              "toolchain": "clang-cl",
-              "buildhash": "8de7a952e2bd4c12ac2d362683104fe2",
-              "key": "windows-x64-vc-8de7a952e2bd4c12ac2d362683104fe2",
-              "toolset": "14.44.35207"
-            }
-          ]
-        },
         {
           "package": "demangler",
           "version": "v17.0.7",
           "buildhash": "57206051c21c41009d4a5306cebc56d2",
           "key": "windows-x64-vc-57206051c21c41009d4a5306cebc56d2",
-          "toolset": "14.44.35207",
+          "toolset": "14.51.36231",
           "release": "demangler_0",
-          "asset": "demangler-57206051c21c41009d4a5306cebc56d2-vc1444.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/demangler_0/demangler-57206051c21c41009d4a5306cebc56d2-vc1444.7z",
-          "sha256": "30ca555b9cfa1c84844cb1d7f40b31e18e62e059f73131e72c7f74bb25b9ab38",
-          "size": 243874,
+          "asset": "demangler-57206051c21c41009d4a5306cebc56d2-vc1451.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/demangler_0/demangler-57206051c21c41009d4a5306cebc56d2-vc1451.7z",
+          "sha256": "a1a49553dd563e63a0a5c6a91b27f0f48e5d1603b6aa0ca5d6ef49c982b13395",
+          "size": 243879,
           "container": "7z",
           "aliases": [
             {
@@ -79,14 +52,14 @@
               "toolchain": "msvc",
               "buildhash": "0605db7b334a4133bdea05de941f5f33",
               "key": "windows-x64-vc-0605db7b334a4133bdea05de941f5f33",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
               "buildhash": "7f9e4d586bbc41e1921315e1c4dbb684",
               "key": "windows-x64-vc-7f9e4d586bbc41e1921315e1c4dbb684",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             }
           ]
         }

@@ -1,48 +1,50 @@
 {
   "package": "libcurl",
   "version": "8.21.0",
-  "built_at": "2026-10-20T18:18:57Z",
-  "xmake_version": "2.9.8",
+  "built_at": "2026-10-27T11:48:31Z",
+  "xmake_version": "3.1.2",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.1.1",
+  "produced_for": "levilamina@26.51.8",
   "entries": {
     "default": {
       "package": "libcurl",
       "version": "8.21.0",
-      "built_at": "2026-10-20T18:18:57Z",
-      "xmake_version": "2.9.8",
+      "built_at": "2026-10-27T11:48:31Z",
+      "xmake_version": "3.1.2",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.1.1",
+      "produced_for": "levilamina@26.51.8",
       "artifacts": [
         {
           "package": "libcurl",
           "version": "8.21.0",
           "buildhash": "917c16ddbf2942d1ae0e099942006c5b",
           "key": "windows-x64-vc-917c16ddbf2942d1ae0e099942006c5b",
-          "toolset": "14.44.35207",
+          "toolset": "14.51.36231",
           "release": "libcurl_0",
-          "asset": "libcurl-917c16ddbf2942d1ae0e099942006c5b-vc1444.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libcurl_0/libcurl-917c16ddbf2942d1ae0e099942006c5b-vc1444.7z",
-          "sha256": "a2f8b295471f58bf4eda3bb2db8dd81ee77e0c6ce386387a7b70276e010c35f8",
-          "size": 1397566,
+          "asset": "libcurl-917c16ddbf2942d1ae0e099942006c5b-vc1451.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/libcurl_0/libcurl-917c16ddbf2942d1ae0e099942006c5b-vc1451.7z",
+          "sha256": "b1002d113dee38a645eca9d5ff8ba8c7ad66b08dd28a370ed66dbefed223dc6e",
+          "size": 1397605,
           "container": "7z",
           "aliases": [
             {
@@ -50,14 +52,14 @@
               "toolchain": "msvc",
               "buildhash": "0de27c26a1a74ad692b8b1fc35c5c59d",
               "key": "windows-x64-vc-0de27c26a1a74ad692b8b1fc35c5c59d",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
               "buildhash": "bd3caa5a72e84c5bb235d19eec2a450e",
               "key": "windows-x64-vc-bd3caa5a72e84c5bb235d19eec2a450e",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             }
           ]
         }

@@ -1,48 +1,50 @@
 {
   "package": "symbolprovider",
   "version": "v1.3.0",
-  "built_at": "2026-10-20T22:54:47Z",
-  "xmake_version": "2.8.6",
+  "built_at": "2026-10-27T11:48:31Z",
+  "xmake_version": "3.1.2",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@0.9.0",
+  "produced_for": "levilamina@26.51.8",
   "entries": {
     "default": {
       "package": "symbolprovider",
       "version": "v1.3.0",
-      "built_at": "2026-10-20T22:54:47Z",
-      "xmake_version": "2.8.6",
+      "built_at": "2026-10-27T11:48:31Z",
+      "xmake_version": "3.1.2",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@0.9.0",
+      "produced_for": "levilamina@26.51.8",
       "artifacts": [
         {
           "package": "symbolprovider",
           "version": "v1.3.0",
           "buildhash": "8ef9d781a7854895b90a561f7f9be0ea",
           "key": "windows-x64-vc-8ef9d781a7854895b90a561f7f9be0ea",
-          "toolset": "14.44.35207",
+          "toolset": "14.51.36231",
           "release": "symbolprovider_0",
-          "asset": "symbolprovider-8ef9d781a7854895b90a561f7f9be0ea-vc1444.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/symbolprovider_0/symbolprovider-8ef9d781a7854895b90a561f7f9be0ea-vc1444.7z",
-          "sha256": "915f12d0b09a9f255d14de4ba98abfde19030fc025da33722b743a0daae7c01c",
-          "size": 5060,
+          "asset": "symbolprovider-8ef9d781a7854895b90a561f7f9be0ea-vc1451.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/symbolprovider_0/symbolprovider-8ef9d781a7854895b90a561f7f9be0ea-vc1451.7z",
+          "sha256": "d747ee0906e09a2040b6471b7e43731d8c9c292433dce750c861216d3abc4937",
+          "size": 5072,
           "container": "7z",
           "aliases": [
             {
@@ -50,14 +52,14 @@
               "toolchain": "msvc",
               "buildhash": "ebc9be7a4187452c8d94bfab703d73c3",
               "key": "windows-x64-vc-ebc9be7a4187452c8d94bfab703d73c3",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
               "buildhash": "9731305ba7704f5982e5b034fbd5e46c",
               "key": "windows-x64-vc-9731305ba7704f5982e5b034fbd5e46c",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             }
           ]
         }

@@ -1,48 +1,50 @@
 {
   "package": "cpr",
   "version": "1.11.1",
-  "built_at": "2026-10-20T18:18:57Z",
-  "xmake_version": "2.9.8",
+  "built_at": "2026-10-27T11:48:31Z",
+  "xmake_version": "3.1.2",
   "toolchain": "msvc",
-  "vs_toolset": "14.44.35207",
+  "vs_toolset": "14.51.36231",
   "revision": 5,
   "configs": {
-    "target_type": "server"
+    "target_type": "client"
   },
   "alias_profiles": [
-    "msvc"
+    "msvc",
+    "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@1.1.1",
+  "produced_for": "levilamina@26.51.8",
   "entries": {
     "default": {
       "package": "cpr",
       "version": "1.11.1",
-      "built_at": "2026-10-20T18:18:57Z",
-      "xmake_version": "2.9.8",
+      "built_at": "2026-10-27T11:48:31Z",
+      "xmake_version": "3.1.2",
       "toolchain": "msvc",
-      "vs_toolset": "14.44.35207",
+      "vs_toolset": "14.51.36231",
       "revision": 5,
       "configs": {
-        "target_type": "server"
+        "target_type": "client"
       },
       "alias_profiles": [
-        "msvc"
+        "msvc",
+        "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@1.1.1",
+      "produced_for": "levilamina@26.51.8",
       "artifacts": [
         {
           "package": "cpr",
           "version": "1.11.1",
           "buildhash": "1c9ad4a4e04341219556b734b3fdce5d",
           "key": "windows-x64-vc-1c9ad4a4e04341219556b734b3fdce5d",
-          "toolset": "14.44.35207",
+          "toolset": "14.51.36231",
           "release": "cpr_0",
-          "asset": "cpr-1c9ad4a4e04341219556b734b3fdce5d-vc1444.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/cpr_0/cpr-1c9ad4a4e04341219556b734b3fdce5d-vc1444.7z",
-          "sha256": "5ffc79835093575b798231cd07d41f2b76e1fe38e4bc22c5b94305a8aad11e0e",
-          "size": 528307,
+          "asset": "cpr-1c9ad4a4e04341219556b734b3fdce5d-vc1451.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/cpr_0/cpr-1c9ad4a4e04341219556b734b3fdce5d-vc1451.7z",
+          "sha256": "b43a400e12b2d074e6d06bb3c6442c67b245b0922ba788c572f5afd5e8f4dc0d",
+          "size": 528302,
           "container": "7z",
           "aliases": [
             {
@@ -50,14 +52,14 @@
               "toolchain": "msvc",
               "buildhash": "3a95096e5c70467fbd5a5d8585343423",
               "key": "windows-x64-vc-3a95096e5c70467fbd5a5d8585343423",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
               "buildhash": "595dddd1bb5443de92a1c339a160d7b8",
               "key": "windows-x64-vc-595dddd1bb5443de92a1c339a160d7b8",
-              "toolset": "14.44.35207"
+              "toolset": "14.51.36231"
             }
           ]
         }
