@@ -1,7 +1,7 @@
 {
   "package": "cpr",
   "version": "1.11.1",
-  "built_at": "2026-10-27T11:48:31Z",
+  "built_at": "2026-11-03T17:43:20Z",
   "xmake_version": "3.1.2",
   "toolchain": "msvc",
   "vs_toolset": "14.51.36231",
@@ -14,12 +14,12 @@
     "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@26.51.8",
+  "produced_for": "levilamina@26.60.0",
   "entries": {
     "default": {
       "package": "cpr",
       "version": "1.11.1",
-      "built_at": "2026-10-27T11:48:31Z",
+      "built_at": "2026-11-03T17:43:20Z",
       "xmake_version": "3.1.2",
       "toolchain": "msvc",
       "vs_toolset": "14.51.36231",
@@ -32,7 +32,7 @@
         "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@26.51.8",
+      "produced_for": "levilamina@26.60.0",
       "artifacts": [
         {
           "package": "cpr",
