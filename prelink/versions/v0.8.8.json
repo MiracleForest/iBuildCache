@@ -1,7 +1,7 @@
 {
   "package": "prelink",
   "version": "v0.8.8",
-  "built_at": "2026-11-03T17:43:20Z",
+  "built_at": "2026-11-04T19:09:36Z",
   "xmake_version": "3.1.2",
   "toolchain": "msvc",
   "vs_toolset": "14.51.36231",
@@ -14,12 +14,12 @@
     "clang-cl"
   ],
   "compiled_with": "msvc",
-  "produced_for": "levilamina@26.60.0",
+  "produced_for": "levilamina@26.60.1",
   "entries": {
     "default": {
       "package": "prelink",
       "version": "v0.8.8",
-      "built_at": "2026-11-03T17:43:20Z",
+      "built_at": "2026-11-04T19:09:36Z",
       "xmake_version": "3.1.2",
       "toolchain": "msvc",
       "vs_toolset": "14.51.36231",
@@ -32,33 +32,33 @@
         "clang-cl"
       ],
       "compiled_with": "msvc",
-      "produced_for": "levilamina@26.60.0",
+      "produced_for": "levilamina@26.60.1",
       "artifacts": [
         {
           "package": "prelink",
           "version": "v0.8.8",
-          "buildhash": "91a0658b53f4491cad4b89916b15ddbc",
-          "key": "windows-x64-vc-91a0658b53f4491cad4b89916b15ddbc",
+          "buildhash": "aa6988194f484f41a283d8f8c5dfea72",
+          "key": "windows-x64-vc-aa6988194f484f41a283d8f8c5dfea72",
           "toolset": "14.51.36231",
           "release": "prelink_0",
-          "asset": "prelink-91a0658b53f4491cad4b89916b15ddbc-vc1451.7z",
-          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/prelink_0/prelink-91a0658b53f4491cad4b89916b15ddbc-vc1451.7z",
-          "sha256": "220ec82a920aa4d0c0d1e4687d93aeadf04bcf41c846fcf462c4a4e54b6d9ba8",
-          "size": 3084543,
+          "asset": "prelink-aa6988194f484f41a283d8f8c5dfea72-vc1451.7z",
+          "url": "https://github.com/MiracleForest/iBuildCache/releases/download/prelink_0/prelink-aa6988194f484f41a283d8f8c5dfea72-vc1451.7z",
+          "sha256": "b0a2d4e27a662b176afd6277f303543fc22a5424748c711d9c3ecc597d189583",
+          "size": 4301603,
           "container": "7z",
           "aliases": [
             {
               "id": "msvc",
               "toolchain": "msvc",
-              "buildhash": "1f2a6ce1d8b14e5da3c92169e38a36c3",
-              "key": "windows-x64-vc-1f2a6ce1d8b14e5da3c92169e38a36c3",
+              "buildhash": "99c1dcce4963401ab7480150b40057c0",
+              "key": "windows-x64-vc-99c1dcce4963401ab7480150b40057c0",
               "toolset": "14.51.36231"
             },
             {
               "id": "clang-cl",
               "toolchain": "clang-cl",
-              "buildhash": "ab4b6c7b9f354e9b8401a3f390c53af8",
-              "key": "windows-x64-vc-ab4b6c7b9f354e9b8401a3f390c53af8",
+              "buildhash": "016d4eca850f4c46831153d6f93c5931",
+              "key": "windows-x64-vc-016d4eca850f4c46831153d6f93c5931",
               "toolset": "14.51.36231"
             }
           ]
